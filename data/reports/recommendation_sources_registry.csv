@@ -1,0 +1,3 @@
+source_id,display_name,source_type,recommendation_file,raw_input_file,clean_file,parse_report_file,created_at,season,league,row_count,notes
+final_2024_2025_rule_based,默认推荐名单：2024-2025,final_default,data/reports/frontend_recommendations_enriched.csv,,,,2026-06-03T16:57:16.328582+00:00,2024-2025,,300,final common CBA source league pool + rule-based baseline
+g_league_2025_2026_20260627_221904,G League 2025-2026,bundled_result,data/reports/user_recommendations/g_league_2025_2026_20260627_221904_recommendations.csv,,,,2026-06-27T22:19:04.530677+00:00,2025-2026,G League,526,bundled current-season recommendation result

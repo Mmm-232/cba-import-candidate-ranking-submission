@@ -1,7 +1,4 @@
-"""
-Module: utils.py
-Purpose: Shared utility helpers for normalisation, matching, statistics, feature helpers, and formatting.
-"""
+"""Shared utility helpers for normalisation, matching, statistics, feature helpers, and formatting."""
 from __future__ import annotations
 
 import logging
@@ -20,13 +17,11 @@ CACHE_DIR = DATA_DIR / "cache"
 REPORTS_DIR = DATA_DIR / "reports"
 
 
-# 功能：创建原始数据、处理数据、缓存和报告所需的文件夹。
 def ensure_data_dirs() -> None:
     for path in (RAW_DIR, PROCESSED_DIR, CACHE_DIR, REPORTS_DIR):
         path.mkdir(parents=True, exist_ok=True)
 
 
-# 功能：设置日志级别和显示格式，方便查看运行过程和错误。
 def configure_logging(level: str = "INFO") -> None:
     logging.basicConfig(
         level=getattr(logging, level.upper(), logging.INFO),
@@ -34,7 +29,6 @@ def configure_logging(level: str = "INFO") -> None:
     )
 
 
-# 功能：清理并统一球员姓名，同时保留姓名中的前后缀。
 def normalise_player_name(raw_name: str) -> str:
     """Return a display-friendly normalised name while preserving particles/suffixes."""
     name = unicodedata.normalize("NFKC", raw_name or "").strip()
@@ -43,7 +37,6 @@ def normalise_player_name(raw_name: str) -> str:
     return name.title()
 
 
-# 功能：把球员姓名转换成便于跨数据源匹配的统一键。
 def player_name_key(name: str) -> str:
     """Create a conservative matching key for joins across sources."""
     ascii_name = unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode("ascii")
@@ -53,7 +46,6 @@ def player_name_key(name: str) -> str:
     return ascii_name
 
 
-# 功能：从赛季文本中提取开始年份。
 def season_start_year(season: str) -> int:
     match = re.search(r"(19|20)\d{2}", str(season))
     if not match:
@@ -61,42 +53,35 @@ def season_start_year(season: str) -> int:
     return int(match.group(0))
 
 
-# 功能：把开始年份转换成 NBA 使用的赛季格式。
 def nba_season_label(start_year: int) -> str:
     return f"{start_year}-{str(start_year + 1)[-2:]}"
 
 
-# 功能：根据 CBA 赛季计算其前一个 NBA 赛季。
 def previous_nba_season(cba_season: str) -> str:
     """Map a CBA season like 2025-2026 to the previous NBA season label, e.g. 2024-25."""
     return nba_season_label(season_start_year(cba_season) - 1)
 
 
-# 功能：计算目标 CBA 赛季对应的历史数据截止年份。
 def cba_join_cutoff_year(cba_season: str) -> int:
     """Return the start year of the CBA season; histories must start before this."""
     return season_start_year(cba_season)
 
 
-# 功能：把文本转换成可安全用于文件名或标识符的格式。
 def safe_slug(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9]+", "_", value.strip()).strip("_").lower()
     return slug or "unknown"
 
 
-# 功能：清理联赛名称，方便统一比较和筛选。
 def normalise_league_name(league: object) -> str:
     text = unicodedata.normalize("NFKC", str(league or "")).strip().lower()
     return re.sub(r"[^a-z0-9]+", "", text)
 
 
-# 功能：判断一条记录是否属于 NBA。
 def is_nba_league(league: object) -> bool:
     key = normalise_league_name(league)
     return key == "nba" or key == "nationalbasketballassociation"
 
 
-# 功能：判断一条记录是否属于中国 CBA 或相关国内联赛。
 def is_chinese_cba_league(league: object) -> bool:
     key = normalise_league_name(league)
     if not key:
@@ -104,7 +89,6 @@ def is_chinese_cba_league(league: object) -> bool:
     return any(term in key for term in ["chinesecba", "chinacba", "chinese", "china", "cba"])
 
 
-# 功能：判断联赛能否作为非 NBA 的海外候选经历。
 def is_eligible_overseas_league(league: object) -> bool:
     if league is None or pd.isna(league):
         return False
@@ -115,20 +99,17 @@ def is_eligible_overseas_league(league: object) -> bool:
     return True
 
 
-# 功能：把指定字段安全转换成数值列。
 def numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
     if column not in df.columns:
         return pd.Series(pd.NA, index=df.index, dtype="Float64")
     return pd.to_numeric(df[column], errors="coerce")
 
 
-# 功能：安全执行除法，避免零分母和无效数值造成报错。
 def safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     denominator = denominator.replace(0, pd.NA)
     return numerator / denominator
 
 
-# 功能：根据基础统计计算真实命中率、每36分钟数据和使用率代理等指标。
 def add_derived_history_metrics(history: pd.DataFrame) -> pd.DataFrame:
     """Add source-agnostic role, usage, and efficiency fields where inputs exist."""
     history = history.copy()
@@ -186,7 +167,6 @@ def add_derived_history_metrics(history: pd.DataFrame) -> pd.DataFrame:
     return history
 
 
-# 功能：计算每条球员赛季记录的字段完整度。
 def add_data_completeness_score(history: pd.DataFrame, scoring_columns: list[str]) -> pd.DataFrame:
     history = history.copy()
     available_cols = [col for col in scoring_columns if col in history.columns]

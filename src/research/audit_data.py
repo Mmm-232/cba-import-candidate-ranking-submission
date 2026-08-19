@@ -1,7 +1,4 @@
-"""
-Module: audit_data.py
-Purpose: Run dataset-level audits, including field coverage, league/source coverage, and anomaly checks.
-"""
+"""Run dataset-level audits, including field coverage, league/source coverage, and anomaly checks."""
 from __future__ import annotations
 
 import argparse

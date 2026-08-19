@@ -1,7 +1,4 @@
-"""
-Module: data_quality_report.py
-Purpose: Generate coverage and completeness diagnostics for sources, candidate rows, and label fields.
-"""
+"""Generate coverage and completeness diagnostics for sources, candidate rows, and label fields."""
 from __future__ import annotations
 
 import argparse

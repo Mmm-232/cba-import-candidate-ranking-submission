@@ -1,7 +1,4 @@
-"""
-Module: base.py
-Purpose: Abstract base interface for source adapters with standard fetch/parse/unify method signatures.
-"""
+"""Abstract base interface for source adapters with standard fetch/parse/unify method signatures."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -170,7 +167,6 @@ class PlayerHistorySource(ABC):
     name: str
 
     @abstractmethod
-    # 功能：读取当前数据源并整理成统一的球员赛季记录。
     def collect(
         self,
         cba_labels: pd.DataFrame,
@@ -180,20 +176,16 @@ class PlayerHistorySource(ABC):
     ) -> SourceCollectionResult:
         """Collect player-season histories for CBA label players."""
 
-    # 功能：创建字段完整但没有记录的球员历史表。
     def empty_history(self) -> pd.DataFrame:
         return pd.DataFrame(columns=HISTORY_COLUMNS)
 
-    # 功能：创建字段完整但没有结果的匹配摘要表。
     def empty_summary(self) -> pd.DataFrame:
         return pd.DataFrame(columns=SUMMARY_COLUMNS)
 
-    # 功能：把数据源返回的原始记录单独保存。
     def write_raw(self, result: SourceCollectionResult, raw_path: Path) -> None:
         raw_path.parent.mkdir(parents=True, exist_ok=True)
         self.normalise_history_schema(result.history).to_csv(raw_path, index=False)
 
-    # 功能：补齐并排列统一球员历史结构的字段。
     def normalise_history_schema(self, history: pd.DataFrame) -> pd.DataFrame:
         history = history.copy()
         for col in HISTORY_COLUMNS:
@@ -203,7 +195,6 @@ class PlayerHistorySource(ABC):
         history = add_data_completeness_score(history, COMPLETENESS_COLUMNS)
         return history[HISTORY_COLUMNS]
 
-    # 功能：补齐并排列统一匹配摘要结构的字段。
     def normalise_summary_schema(self, summary: pd.DataFrame) -> pd.DataFrame:
         summary = summary.copy()
         for col in SUMMARY_COLUMNS:

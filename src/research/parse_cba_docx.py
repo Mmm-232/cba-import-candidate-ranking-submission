@@ -1,7 +1,4 @@
-"""
-Module: parse_cba_docx.py
-Purpose: Parse cba.docx and extract CBA import player lists by season as structured raw and cleaned tables.
-"""
+"""Parse cba.docx and extract CBA import player lists by season as structured raw and cleaned tables."""
 from __future__ import annotations
 
 import argparse
@@ -22,7 +19,6 @@ LOGGER = logging.getLogger(__name__)
 SEASON_PATTERN = re.compile(r"(20\d{2})\s*[–-]\s*(20\d{2})")
 
 
-# 功能：从 Word 文档内容中识别各个 CBA 赛季标题。
 def extract_seasons(document: Document) -> list[str]:
     seasons: list[str] = []
     for paragraph in document.paragraphs:
@@ -32,7 +28,6 @@ def extract_seasons(document: Document) -> list[str]:
     return seasons
 
 
-# 功能：按赛季读取 Word 文档中的外援姓名并完成标准化。
 def parse_cba_docx(docx_path: Path) -> pd.DataFrame:
     if not docx_path.exists():
         raise FileNotFoundError(f"Cannot find input file: {docx_path}")
@@ -74,7 +69,6 @@ def parse_cba_docx(docx_path: Path) -> pd.DataFrame:
     return df
 
 
-# 功能：分别保存原始姓名表和清洗后的 CBA 标签表。
 def write_outputs(df: pd.DataFrame, raw_path: Path, clean_path: Path) -> None:
     raw_path.parent.mkdir(parents=True, exist_ok=True)
     clean_path.parent.mkdir(parents=True, exist_ok=True)
@@ -95,7 +89,6 @@ def write_outputs(df: pd.DataFrame, raw_path: Path, clean_path: Path) -> None:
     LOGGER.info("Wrote clean CBA imports to %s", clean_path)
 
 
-# 功能：执行 Word 外援名单解析流程并保存结果。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Parse CBA foreign player lists from cba.docx.")
     parser.add_argument("--docx", type=Path, default=Path("cba.docx"), help="Path to the source Word document.")

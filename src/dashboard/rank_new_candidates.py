@@ -15,7 +15,6 @@ DEFAULT_INPUT = PROCESSED_DIR / "new_candidates_clean.csv"
 DEFAULT_OUTPUT = REPORTS_DIR / "new_candidate_recommendations.csv"
 
 
-# 功能：计算数值在当前候选池中的百分位。
 def _percentile(series: pd.Series) -> pd.Series:
     values = pd.to_numeric(series, errors="coerce")
     if values.notna().sum() <= 1:
@@ -23,12 +22,10 @@ def _percentile(series: pd.Series) -> pd.Series:
     return values.rank(pct=True).fillna(0.0)
 
 
-# 功能：判断联赛是否属于常见 CBA 外援来源路径。
 def _common_pathway_flag(df: pd.DataFrame) -> pd.Series:
     return df.apply(lu.is_common_pathway, axis=1).astype(int)
 
 
-# 功能：判断球员是否已有 CBA 经历。
 def _prior_cba_flag(df: pd.DataFrame) -> pd.Series:
     for col in ["has_prior_cba_experience_before_t", "has_prior_cba_experience", "prior_cba_experience"]:
         if col in df.columns:
@@ -36,7 +33,6 @@ def _prior_cba_flag(df: pd.DataFrame) -> pd.Series:
     return pd.Series(0, index=df.index)
 
 
-# 功能：根据球员统计生成简短的推荐理由。
 def _reason(row: pd.Series) -> str:
     parts = []
     if row.get("score_component_pathway", 0) > 0:
@@ -58,7 +54,6 @@ def _reason(row: pd.Series) -> str:
     return "; ".join(parts)
 
 
-# 功能：使用透明规则分数对新候选人排序并生成解释。
 def rank_candidates(input_path: str | Path = DEFAULT_INPUT, output_path: str | Path = DEFAULT_OUTPUT) -> pd.DataFrame:
     ensure_data_dirs()
     input_path = Path(input_path)
@@ -146,7 +141,6 @@ def rank_candidates(input_path: str | Path = DEFAULT_INPUT, output_path: str | P
     return ranked
 
 
-# 功能：执行新候选人的透明规则排序并保存推荐结果。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Rank new uploaded CBA import candidate player-season rows.")
     parser.add_argument("--input", default=str(DEFAULT_INPUT), help="Cleaned new candidates CSV.")

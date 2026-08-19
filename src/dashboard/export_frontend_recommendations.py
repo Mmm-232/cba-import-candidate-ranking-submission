@@ -1,7 +1,4 @@
-"""
-Module: export_frontend_recommendations.py
-Purpose: Export recommendation and optional biodata outputs required by the Streamlit frontend.
-"""
+"""Export recommendation and optional biodata outputs required by the Streamlit frontend."""
 from __future__ import annotations
 
 import argparse
@@ -91,7 +88,6 @@ EXPORT_FIELDS = [
 ]
 
 
-# 功能：把不同写法的赛季统一为项目使用的格式。
 def _normalise_season(value: object) -> str:
     text = str(value or "").strip()
     if not text or text.lower() in {"nan", "none"}:
@@ -113,14 +109,12 @@ def _normalise_season(value: object) -> str:
     return text.replace(" - ", "-").replace(" / ", "-")
 
 
-# 功能：从赛季文本中安全提取开始年份。
 def _season_start(value: object) -> float:
     normalised = _normalise_season(value)
     match = re.search(r"\d{4}", normalised)
     return float(match.group(0)) if match else float("nan")
 
 
-# 功能：在输入表中寻找可用的赛季字段。
 def _find_season_column(df: pd.DataFrame) -> str:
     for col in SEASON_COLUMNS:
         if col in df.columns and df[col].notna().any():
@@ -130,7 +124,6 @@ def _find_season_column(df: pd.DataFrame) -> str:
     raise ValueError("No recommendation season column found.")
 
 
-# 功能：读取最终排名结果并选择指定赛季的候选人。
 def _source_predictions() -> tuple[pd.DataFrame, str, str]:
     if PREDICTION_FILE.exists():
         df = pd.read_csv(PREDICTION_FILE)
@@ -167,7 +160,6 @@ def _source_predictions() -> tuple[pd.DataFrame, str, str]:
     return df, str(PROCESSED_DIR / "labelled_player_season_dataset_gleague.csv"), "recomputed common CBA source league pool + rule-based baseline"
 
 
-# 功能：根据球员统计生成简短的推荐理由。
 def _reason(row: pd.Series) -> str:
     prior = bool(float(row.get("has_prior_cba_experience_before_t", 0) or 0) > 0)
     missing_perf = pd.isna(row.get("points_per_36")) and pd.isna(row.get("usage_proxy"))
@@ -180,7 +172,6 @@ def _reason(row: pd.Series) -> str:
     return "High-ranked candidate from a common CBA source league with interpretable pathway signal."
 
 
-# 功能：安全读取字段；缺失时生成空列。
 def _series_or_blank(df: pd.DataFrame, *cols: str) -> pd.Series:
     for col in cols:
         if col in df.columns:
@@ -188,7 +179,6 @@ def _series_or_blank(df: pd.DataFrame, *cols: str) -> pd.Series:
     return pd.Series(pd.NA, index=df.index)
 
 
-# 功能：把球员个人资料合并到推荐名单中。
 def _merge_biodata(df: pd.DataFrame) -> pd.DataFrame:
     if not BIODATA_OVERRIDES.exists() or "player_name_key" not in df.columns:
         return df
@@ -214,7 +204,6 @@ def _merge_biodata(df: pd.DataFrame) -> pd.DataFrame:
     return df.merge(bio[keep].drop_duplicates("player_name_key"), on="player_name_key", how="left")
 
 
-# 功能：整理 Dashboard 使用的最终推荐表。
 def build_export(all_seasons: bool = False, top_n: int = 300) -> tuple[pd.DataFrame, dict[str, object]]:
     ensure_data_dirs()
     df, source_file, model_setup = _source_predictions()
@@ -287,7 +276,6 @@ def build_export(all_seasons: bool = False, top_n: int = 300) -> tuple[pd.DataFr
     return df[EXPORT_FIELDS], report
 
 
-# 功能：保留已有推荐文件中已经补充的资料字段。
 def _merge_existing_enriched(out: pd.DataFrame) -> pd.DataFrame:
     if not ENRICHED_OUTPUT.exists():
         print(f"No enriched recommendation file found at {ENRICHED_OUTPUT}; exported base recommendations only.")
@@ -324,7 +312,6 @@ def _merge_existing_enriched(out: pd.DataFrame) -> pd.DataFrame:
     return merged.merge(keep, on="player_name_key", how="left")
 
 
-# 功能：导出 Dashboard 使用的最终推荐文件。
 def run(all_seasons: bool = False, top_n: int = 300, with_biodata: bool = False) -> None:
     out, report = build_export(all_seasons=all_seasons, top_n=top_n)
     if with_biodata:
@@ -339,7 +326,6 @@ def run(all_seasons: bool = False, top_n: int = 300, with_biodata: bool = False)
     print(f"Export scope: {report['export_scope']}")
 
 
-# 功能：导出 Dashboard 使用的最终推荐文件。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export Streamlit dashboard recommendation candidates.")
     parser.add_argument("--all-seasons", action="store_true", help="Export all validation seasons instead of latest recommendation season only.")

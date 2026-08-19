@@ -1,7 +1,4 @@
-"""
-Module: recommendation_source_registry.py
-Purpose: Maintain registry metadata for default/user/parsed/API recommendation sources and their lifecycle.
-"""
+"""Maintain registry metadata for default/user/parsed/API recommendation sources and their lifecycle."""
 from __future__ import annotations
 
 import re
@@ -43,7 +40,6 @@ DEFAULT_SOURCE_ID = "final_2024_2025_rule_based"
 DEFAULT_DISPLAY_NAME = "\u9ed8\u8ba4\u63a8\u8350\u540d\u5355\uff1a2024-2025"
 
 
-# 功能：清理数据源登记表中的显示名称。
 def _clean_registry_display_names(registry: pd.DataFrame) -> pd.DataFrame:
     registry = registry.copy()
     if "display_name" not in registry.columns:
@@ -51,7 +47,6 @@ def _clean_registry_display_names(registry: pd.DataFrame) -> pd.DataFrame:
     default_mask = registry.get("source_id", pd.Series(index=registry.index, dtype=object)).astype(str).eq(DEFAULT_SOURCE_ID)
     registry.loc[default_mask, "display_name"] = DEFAULT_DISPLAY_NAME
 
-    # 功能：为缺失字段提供兼容的默认值。
     def fallback(row: pd.Series) -> str:
         value = str(row.get("display_name", "") or "").strip()
         if not value or "????" in value:
@@ -67,12 +62,10 @@ def _clean_registry_display_names(registry: pd.DataFrame) -> pd.DataFrame:
 USER_SOURCE_TYPES = {"uploaded_file", "pasted_text", "api_import"}
 
 
-# 功能：判断数据源是否由用户上传、粘贴或 API 导入。
 def is_user_source(row: pd.Series | dict[str, object]) -> bool:
     return str(row.get("source_type", "")).strip() in USER_SOURCE_TYPES
 
 
-# 功能：确认文件位于允许删除的用户推荐目录中。
 def is_safe_user_recommendation_path(path: str | Path | None) -> bool:
     if not path:
         return False
@@ -83,12 +76,10 @@ def is_safe_user_recommendation_path(path: str | Path | None) -> bool:
     except (OSError, RuntimeError, ValueError):
         return False
 
-# 功能：生成当前时间标记。
 def _now_stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
 
-# 功能：把数据源名称转换成安全且稳定的标识符。
 def safe_source_id(display_name: str) -> str:
     text = str(display_name or "").strip().lower()
     text = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "_", text)
@@ -96,12 +87,10 @@ def safe_source_id(display_name: str) -> str:
     return text or "recommendation_source"
 
 
-# 功能：选择正式推荐文件；缺失时返回演示数据。
 def _default_recommendation_file() -> Path:
     return ENRICHED_DEFAULT_PATH if ENRICHED_DEFAULT_PATH.exists() else BASE_DEFAULT_PATH
 
 
-# 功能：为推荐表补齐人工搜索和核查链接。
 def ensure_search_links(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     if "player_name_raw" not in out.columns:
@@ -147,7 +136,6 @@ def ensure_search_links(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# 功能：统一不同推荐来源的字段和显示格式。
 def standardize_recommendation_frame(df: pd.DataFrame) -> pd.DataFrame:
     out = ensure_search_links(df)
     if "rank" not in out.columns and "new_rank" in out.columns:
@@ -164,7 +152,6 @@ def standardize_recommendation_frame(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# 功能：创建或修复本地推荐数据源登记表。
 def ensure_registry() -> pd.DataFrame:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     USER_RECOMMENDATION_DIR.mkdir(parents=True, exist_ok=True)
@@ -220,7 +207,6 @@ def ensure_registry() -> pd.DataFrame:
     return registry
 
 
-# 功能：列出当前可以在 Dashboard 中选择的数据源。
 def list_sources() -> pd.DataFrame:
     registry = ensure_registry()
     if registry.empty:
@@ -229,7 +215,6 @@ def list_sources() -> pd.DataFrame:
     return registry.assign(_order=order).sort_values(["_order", "created_at"], ascending=[True, False]).drop(columns="_order")
 
 
-# 功能：按界面显示名称查找数据源登记记录。
 def get_source_by_display_name(display_name: str) -> dict[str, object] | None:
     registry = list_sources()
     matches = registry[registry["display_name"].astype(str).eq(str(display_name))]
@@ -238,7 +223,6 @@ def get_source_by_display_name(display_name: str) -> dict[str, object] | None:
     return matches.iloc[0].to_dict()
 
 
-# 功能：读取用户当前选择的数据源推荐表。
 def load_selected_recommendations(display_name: str | None = None) -> tuple[pd.DataFrame, dict[str, object]]:
     registry = list_sources()
     if registry.empty:
@@ -260,7 +244,6 @@ def load_selected_recommendations(display_name: str | None = None) -> tuple[pd.D
     return df, source
 
 
-# 功能：在源文件存在时安全复制到用户推荐目录。
 def _copy_if_exists(path: str | Path | None, target: Path) -> str:
     if not path:
         return ""
@@ -272,7 +255,6 @@ def _copy_if_exists(path: str | Path | None, target: Path) -> str:
     return str(target)
 
 
-# 功能：把一个推荐数据源登记到本地 registry。
 def register_source(
     *,
     source_id: str,
@@ -309,7 +291,6 @@ def register_source(
     return registry
 
 
-# 功能：保存新生成的推荐结果并登记为可选数据源。
 def save_generated_recommendation_source(
     *,
     recommendations: pd.DataFrame,
@@ -365,7 +346,6 @@ def save_generated_recommendation_source(
     }
 
 
-# 功能：安全删除用户数据源登记及允许范围内的关联文件。
 def delete_source(source_id: str, delete_files: bool = False) -> dict[str, object]:
     registry = ensure_registry()
     source_id = str(source_id or "").strip()
@@ -423,19 +403,16 @@ def delete_source(source_id: str, delete_files: bool = False) -> dict[str, objec
 
 
 
-# 功能：兼容旧调用名称并转交给安全删除函数。
 def delete_recommendation_source(*args, **kwargs) -> dict[str, object]:
     """Backward-compatible alias for older dashboard code paths."""
     return delete_source(*args, **kwargs)
 
 
-# 功能：兼容旧调用名称并确保 registry 可用。
 def ensure_recommendation_source_registry() -> pd.DataFrame:
     """Backward-compatible alias for registry initialisation."""
     return ensure_registry()
 
 
-# 功能：兼容旧调用名称并读取全部数据源。
 def load_recommendation_sources() -> pd.DataFrame:
     """Backward-compatible alias for listing registered recommendation sources."""
     return list_sources()

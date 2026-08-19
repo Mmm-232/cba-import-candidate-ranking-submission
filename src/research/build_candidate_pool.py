@@ -1,7 +1,4 @@
-"""
-Module: build_candidate_pool.py
-Purpose: Build candidate rows with constructed positive/negative labels for historical and candidate-level ranking datasets.
-"""
+"""Build candidate rows with constructed positive/negative labels for historical and candidate-level ranking datasets."""
 from __future__ import annotations
 
 import argparse
@@ -58,7 +55,6 @@ OUTPUT_COLUMNS = [
 ]
 
 
-# 功能：读取 Kaggle 历史数据并保留符合范围的海外联赛记录。
 def _load_kaggle_history(start_year: int | None, end_year: int | None) -> pd.DataFrame:
     source = Kaggle49LeaguesSource()
     csv_files = sorted(source.data_dir.glob("*.csv"))
@@ -76,7 +72,6 @@ def _load_kaggle_history(start_year: int | None, end_year: int | None) -> pd.Dat
     return history
 
 
-# 功能：按赛季和联赛统计候选数量、正例数量和正例率。
 def build_label_distribution_summary(labelled: pd.DataFrame) -> pd.DataFrame:
     rows = []
     total = len(labelled)
@@ -120,7 +115,6 @@ def build_label_distribution_summary(labelled: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# 功能：构建海外候选池，并按下一赛季是否出现于 CBA 标签生成正负样本。
 def build_candidate_pool(
     cba_clean_path: Path,
     candidate_out: Path,
@@ -163,7 +157,6 @@ def build_candidate_pool(
     return candidate_pool, labelled, summary
 
 
-# 功能：执行候选池和下一赛季标签构建流程。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build labelled candidate pool from eligible Kaggle 49-league rows.")
     parser.add_argument("--cba-clean", type=Path, default=PROCESSED_DIR / "cba_imports_clean.csv")

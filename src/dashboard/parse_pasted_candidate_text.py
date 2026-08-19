@@ -134,7 +134,6 @@ ADVANCED_MAP = {
 }
 
 
-# 功能：清理粘贴文本中的空行和无关字符。
 def _clean_lines(text: str) -> list[str]:
     lines = []
     for line in str(text or "").splitlines():
@@ -150,7 +149,6 @@ def _clean_lines(text: str) -> list[str]:
     return lines
 
 
-# 功能：判断粘贴表格使用逗号、制表符还是其他分隔符。
 def _sniff_sep(lines: list[str]) -> str:
     first = lines[0] if lines else ""
     if "," in first:
@@ -160,7 +158,6 @@ def _sniff_sep(lines: list[str]) -> str:
     return r"\s+"
 
 
-# 功能：把粘贴文本读取成表格。
 def _read_table(text: str) -> pd.DataFrame:
     lines = _clean_lines(text)
     if not lines:
@@ -177,7 +174,6 @@ def _read_table(text: str) -> pd.DataFrame:
     return df
 
 
-# 功能：判断粘贴数据属于 Per 36、Per Game 还是普通表格。
 def _detect_format(df: pd.DataFrame, raw_text: str, hint: str) -> str:
     hint = FORMAT_MAP.get(hint, hint or "auto")
     if hint != "auto":
@@ -201,7 +197,6 @@ def _detect_format(df: pd.DataFrame, raw_text: str, hint: str) -> str:
     return "generic_csv_text"
 
 
-# 功能：识别并映射粘贴表格中的统计字段。
 def _classify_columns(columns: list[str]) -> dict[str, str]:
     out = {}
     for col in columns:
@@ -220,12 +215,10 @@ def _classify_columns(columns: list[str]) -> dict[str, str]:
     return out
 
 
-# 功能：把表格列安全转换成数值。
 def _safe_numeric(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series.astype(str).str.replace("%", "", regex=False), errors="coerce")
 
 
-# 功能：删除同一球员赛季的重复输入记录。
 def _deduplicate(df: pd.DataFrame, keep_all_team_rows: bool) -> tuple[pd.DataFrame, dict[str, int]]:
     if keep_all_team_rows or "player_name_raw" not in df.columns:
         return df, {"duplicate_players_detected": 0, "tot_rows_kept": 0, "team_rows_dropped": 0}
@@ -258,7 +251,6 @@ def _deduplicate(df: pd.DataFrame, keep_all_team_rows: bool) -> tuple[pd.DataFra
     }
 
 
-# 功能：解析粘贴的球员统计文本并生成统一候选表。
 def parse_pasted_text(
     raw_text: str,
     season: str | None = None,
@@ -356,7 +348,6 @@ def parse_pasted_text(
     return out, report
 
 
-# 功能：执行粘贴表格解析并保存标准候选文件。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Parse pasted Basketball-Reference/stat table text into new-candidate CSV.")
     parser.add_argument("--input", required=True, help="Text file containing copied table text.")

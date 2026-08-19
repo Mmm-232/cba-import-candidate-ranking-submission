@@ -1,7 +1,4 @@
-"""
-Module: dashboard_i18n.py
-Purpose: Provide bilingual UI text mapping for dashboard labels, tooltips, and section prompts.
-"""
+"""Provide bilingual UI text mapping for dashboard labels, tooltips, and section prompts."""
 from __future__ import annotations
 
 
@@ -368,7 +365,6 @@ for alias, source_key in FIELD_LABEL_ALIASES.items():
     FIELD_LABELS["en"][alias] = FIELD_LABELS["en"][source_key]
 
 
-# 功能：根据当前语言返回对应的界面文本。
 def t(key: str, lang: str = "zh", **kwargs: object) -> str:
     text = TRANSLATIONS.get(lang, TRANSLATIONS["zh"]).get(key)
     if text is None:
@@ -376,7 +372,6 @@ def t(key: str, lang: str = "zh", **kwargs: object) -> str:
     return text.format(**kwargs) if kwargs else text
 
 
-# 功能：把数据字段名转换成中英文显示标签。
 def field_label(field: str, lang: str = "zh") -> str:
     return FIELD_LABELS.get(lang, FIELD_LABELS["zh"]).get(field, field)
 
@@ -410,7 +405,6 @@ PHRASE_TRANSLATIONS: dict[str, dict[str, str]] = {
 }
 
 
-# 功能：把推荐理由中的固定短语转换成所选语言。
 def translate_phrase_text(text: object, lang: str = "zh") -> str:
     shown = "" if text is None else str(text)
     for source, target in PHRASE_TRANSLATIONS.get(lang, {}).items():

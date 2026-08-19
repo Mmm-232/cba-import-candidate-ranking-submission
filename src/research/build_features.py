@@ -1,7 +1,4 @@
-"""
-Module: build_features.py
-Purpose: Construct ranking features, including pathway, role-volume, efficiency, and prior-CBA context features.
-"""
+"""Construct ranking features, including pathway, role-volume, efficiency, and prior-CBA context features."""
 from __future__ import annotations
 
 import argparse
@@ -83,12 +80,10 @@ FEATURE_STATS = [
 TREND_STATS = ["points", "minutes", "usage_rate", "usage_proxy", "ts_pct", "assist_rate", "turnover_rate", "net_rating"]
 
 
-# 功能：从候选人记录中安全读取一个数值。
 def _numeric_value(value: object) -> object:
     return pd.to_numeric(value, errors="coerce")
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _mean_features(history: pd.DataFrame, window: int, prefix: str) -> dict[str, object]:
     subset = history.sort_values("season_start_year", ascending=False).head(window) if "season_start_year" in history.columns else history
     features: dict[str, object] = {}
@@ -97,7 +92,6 @@ def _mean_features(history: pd.DataFrame, window: int, prefix: str) -> dict[str,
     return features
 
 
-# 功能：根据现有字段计算并添加当前所需信息。
 def _add_stat_group(features: dict[str, object], history: pd.DataFrame, prefix: str) -> None:
     if history.empty:
         for stat in FEATURE_STATS:
@@ -125,7 +119,6 @@ def _add_stat_group(features: dict[str, object], history: pd.DataFrame, prefix: 
             features[f"{prefix}_{stat}_trend_last2"] = pd.NA
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _prior_cba_features(prior_cba: pd.DataFrame) -> dict[str, object]:
     if prior_cba.empty:
         return {
@@ -146,7 +139,6 @@ def _prior_cba_features(prior_cba: pd.DataFrame) -> dict[str, object]:
     }
 
 
-# 功能：根据现有字段计算并添加当前所需信息。
 def _add_raw_history_features(features: dict[str, object], prior: pd.DataFrame) -> None:
     features["history_seasons_available"] = len(prior)
     features["number_of_overseas_leagues_played"] = prior["league"].nunique() if not prior.empty else 0
@@ -178,7 +170,6 @@ def _add_raw_history_features(features: dict[str, object], prior: pd.DataFrame) 
     _add_stat_group(features, prior, "raw")
 
 
-# 功能：根据现有字段计算并添加当前所需信息。
 def _add_eligible_history_features(features: dict[str, object], eligible_prior: pd.DataFrame) -> None:
     features["eligible_history_seasons_available"] = len(eligible_prior)
     features["number_of_eligible_overseas_leagues_played"] = (
@@ -213,7 +204,6 @@ def _add_eligible_history_features(features: dict[str, object], eligible_prior: 
     _add_stat_group(features, eligible_prior, "eligible")
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _label_features(label: pd.Series, history: pd.DataFrame) -> dict[str, object]:
     cutoff_year = cba_join_cutoff_year(label["target_cba_join_season"])
     prior = history[
@@ -238,7 +228,6 @@ def _label_features(label: pd.Series, history: pd.DataFrame) -> dict[str, object
     return features
 
 
-# 功能：根据已有数据构建当前流程需要的结果表。
 def build_features(cba_clean_path: Path, history_path: Path, output_path: Path) -> pd.DataFrame:
     if not cba_clean_path.exists():
         raise FileNotFoundError(f"Missing CBA label table: {cba_clean_path}")
@@ -255,7 +244,6 @@ def build_features(cba_clean_path: Path, history_path: Path, output_path: Path) 
     return features
 
 
-# 功能：执行历史特征构建并保存建模特征表。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build modelling features from pre-CBA player histories.")
     parser.add_argument("--cba-clean", type=Path, default=PROCESSED_DIR / "cba_imports_clean.csv")

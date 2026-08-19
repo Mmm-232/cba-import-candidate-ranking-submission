@@ -1,7 +1,4 @@
-"""
-Module: kaggle_49leagues_source.py
-Purpose: Adapter for local Kaggle 49-leagues style CSV files and column-name mapping to unified schema.
-"""
+"""Adapter for local Kaggle 49-leagues style CSV files and column-name mapping to unified schema."""
 from __future__ import annotations
 
 import logging
@@ -88,12 +85,10 @@ class ColumnMapping:
 class Kaggle49LeaguesSource(PlayerHistorySource):
     name = SOURCE_NAME
 
-    # 功能：保存初始化参数，并准备当前数据源需要的目录和配置。
     def __init__(self, data_dir: Path = DEFAULT_DATA_DIR, fuzzy_threshold: int = 92) -> None:
         self.data_dir = data_dir
         self.fuzzy_threshold = fuzzy_threshold
 
-    # 功能：读取当前数据源并整理成统一的球员赛季记录。
     def collect(
         self,
         cba_labels: pd.DataFrame,
@@ -189,7 +184,6 @@ class Kaggle49LeaguesSource(PlayerHistorySource):
             self.normalise_summary_schema(summary),
         )
 
-    # 功能：读取并合并本地 Kaggle 49 Leagues CSV 文件。
     def _load_dataset(self, csv_files: list[Path]) -> pd.DataFrame:
         frames = []
         for path in csv_files:
@@ -199,7 +193,6 @@ class Kaggle49LeaguesSource(PlayerHistorySource):
             frames.append(frame)
         return pd.concat(frames, ignore_index=True)
 
-    # 功能：检查 Kaggle 文件字段并记录实际映射。
     def _inspect_columns(self, dataset: pd.DataFrame) -> list[ColumnMapping]:
         normalised = {_normalise_column_name(col): col for col in dataset.columns}
         mappings: list[ColumnMapping] = []
@@ -224,7 +217,6 @@ class Kaggle49LeaguesSource(PlayerHistorySource):
             )
         return mappings
 
-    # 功能：把 Kaggle 数据转换成统一球员赛季结构。
     def _standardise_dataset(self, dataset: pd.DataFrame, mappings: list[ColumnMapping]) -> pd.DataFrame:
         out = pd.DataFrame(index=dataset.index)
         for mapping in mappings:
@@ -275,12 +267,10 @@ class Kaggle49LeaguesSource(PlayerHistorySource):
         return out
 
 
-# 功能：清理字段名，方便匹配不同来源的写法。
 def _normalise_column_name(value: str) -> str:
     return "".join(ch.lower() for ch in str(value).strip() if ch.isalnum())
 
 
-# 功能：安全提取赛季开始年份。
 def _safe_season_start_year(value: object) -> int | pd.NA:
     try:
         return season_start_year(str(value))
@@ -288,7 +278,6 @@ def _safe_season_start_year(value: object) -> int | pd.NA:
         return pd.NA
 
 
-# 功能：把普通数值或百分比文本转换成数值。
 def _coerce_numeric_or_percent(series: pd.Series) -> pd.Series:
     if series.dtype == object:
         cleaned = series.astype(str).str.strip()
@@ -299,7 +288,6 @@ def _coerce_numeric_or_percent(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce")
 
 
-# 功能：在分母有效时计算比例，否则返回空值。
 def _safe_ratio(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     numerator = pd.to_numeric(numerator, errors="coerce")
     denominator = pd.to_numeric(denominator, errors="coerce").replace(0, pd.NA)

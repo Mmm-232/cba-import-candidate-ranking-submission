@@ -73,46 +73,34 @@ NUMERIC_INPUT_COLUMNS = [
 CORE_STATS = ["minutes_per_game", "points_per_36", "usage_proxy", "games", "minutes"]
 EFFICIENCY_STATS = ["ts_pct", "fg_pct", "three_pct", "ft_pct"]
 
-
-# 功能：把指定字段安全转换为数值。
 def _to_numeric(df: pd.DataFrame, col: str) -> pd.Series:
     if col not in df.columns:
         return pd.Series(np.nan, index=df.index, dtype="float64")
     return pd.to_numeric(df[col], errors="coerce")
 
-
-# 功能：把比例限制在合理的零到一范围内。
 def _clip_pct(series: pd.Series) -> pd.Series:
     values = pd.to_numeric(series, errors="coerce")
     if values.dropna().gt(1.0).any() and values.dropna().le(100).all():
         values = values / 100.0
     return values.clip(0, 1).fillna(0.0)
 
-
-# 功能：计算球员在当前候选池中的百分位排名。
 def _rank_pct(series: pd.Series) -> pd.Series:
     values = pd.to_numeric(series, errors="coerce")
     if values.notna().sum() <= 1:
         return pd.Series(0.0, index=series.index, dtype="float64")
     return values.rank(pct=True, method="average").fillna(0.0).clip(0, 1)
 
-
-# 功能：按指标方向选择正向或反向百分位。
 def _preferred_pct(df: pd.DataFrame, raw_col: str, percentile_col: str | None = None) -> pd.Series:
     percentile_col = percentile_col or f"{raw_col}_league_season_pct"
     if percentile_col in df.columns and pd.to_numeric(df[percentile_col], errors="coerce").notna().any():
         return _clip_pct(df[percentile_col])
     return _rank_pct(_to_numeric(df, raw_col))
 
-
-# 功能：安全执行除法，避免零分母和无效数值造成报错。
 def _safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     den = pd.to_numeric(denominator, errors="coerce").replace(0, np.nan)
     num = pd.to_numeric(numerator, errors="coerce")
     return num / den
 
-
-# 功能：用已有基础统计补算角色评分所需的缺失字段。
 def _derive_missing_columns(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     for col in NUMERIC_INPUT_COLUMNS:
@@ -153,8 +141,6 @@ def _derive_missing_columns(df: pd.DataFrame) -> pd.DataFrame:
         out["assist_to_turnover_ratio"] = _safe_divide(_to_numeric(out, "assists"), _to_numeric(out, "turnovers"))
     return out
 
-
-# 功能：根据位置文字判断球员是否偏前场或内线。
 def _frontcourt_position_signal(df: pd.DataFrame) -> pd.Series:
     if "position" not in df.columns:
         return pd.Series(0.0, index=df.index)
@@ -162,8 +148,6 @@ def _frontcourt_position_signal(df: pd.DataFrame) -> pd.Series:
     frontcourt = text.str.contains(r"\b(?:f|pf|sf|c)\b|forward|center|centre|big", regex=True)
     return frontcourt.astype(float)
 
-
-# 功能：根据身高计算前场和内线角色信号。
 def _height_signal(df: pd.DataFrame) -> pd.Series:
     height = _to_numeric(df, "height_cm")
     if height.notna().sum() == 0:
@@ -175,8 +159,6 @@ def _height_signal(df: pd.DataFrame) -> pd.Series:
         return pd.Series(0.0, index=df.index)
     return _rank_pct(height)
 
-
-# 功能：根据缺失数据、出场时间和效率生成风险标记。
 def _risk_flags(df: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame(index=df.index)
     games = _to_numeric(df, "games")
@@ -192,8 +174,6 @@ def _risk_flags(df: pd.DataFrame) -> pd.DataFrame:
     out["data_quality_risk_flag"] = completeness.lt(0.45).fillna(out["missing_core_stats_risk_flag"])
     return out
 
-
-# 功能：根据出场场次和时间计算球员可用性分数。
 def _availability_score(df: pd.DataFrame, risks: pd.DataFrame) -> pd.Series:
     games_pct = _preferred_pct(df, "games")
     minutes_pct = _preferred_pct(df, "minutes")
@@ -204,8 +184,6 @@ def _availability_score(df: pd.DataFrame, risks: pd.DataFrame) -> pd.Series:
     penalty = 8 * risks["missing_core_stats_risk_flag"].astype(float) + 6 * risks["small_sample_warning"].astype(float)
     return (score - penalty).clip(0, 100)
 
-
-# 功能：计算不同外援角色画像下的适配分数。
 def _score_roles(df: pd.DataFrame, risks: pd.DataFrame) -> pd.DataFrame:
     pct_points = _preferred_pct(df, "points_per_36")
     pct_usage = _preferred_pct(df, "usage_proxy")
@@ -247,8 +225,6 @@ def _score_roles(df: pd.DataFrame, risks: pd.DataFrame) -> pd.DataFrame:
     scores["score_low_risk_availability"] = _availability_score(df, risks)
     return scores.clip(0, 100)
 
-
-# 功能：计算生成解释文字时使用的候选池参考阈值。
 def _thresholds(scores: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for score_col in ROLE_SCORE_COLUMNS:
@@ -271,35 +247,47 @@ def _thresholds(scores: pd.DataFrame) -> pd.DataFrame:
         )
     return pd.DataFrame(rows)
 
-
-# 功能：根据统计、角色和路径信号生成推荐解释。
 def _build_reasons(df: pd.DataFrame, scored: pd.DataFrame, risks: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame(index=df.index)
     best_score_col = scored[ROLE_SCORE_COLUMNS].idxmax(axis=1)
     out["best_role_profile"] = best_score_col.map(ROLE_LABELS)
     out["best_role_score"] = scored[ROLE_SCORE_COLUMNS].max(axis=1).round(2)
 
-    # 功能：说明球员为什么适合当前角色画像。
+    def row_number(row: pd.Series, field: str) -> float | None:
+        value = pd.to_numeric(pd.Series([row.get(field)]), errors="coerce").iloc[0]
+        return None if pd.isna(value) else float(value)
+
+    def rate_text(value: float) -> str:
+        return f"{value:.1%}" if 0 <= value <= 1 else f"{value:.2f}"
+
     def role_reason(row: pd.Series) -> str:
         parts = []
-        if pd.notna(row.get("usage_proxy")):
-            parts.append("使用率代理较有参考价值")
-        if pd.notna(row.get("points_per_36")):
-            parts.append("每36分钟得分可用于判断进攻产量")
-        if pd.notna(row.get("assists_per_36")) or pd.notna(row.get("assists")):
-            parts.append("组织数据可用于判断持球/传球角色")
-        if pd.notna(row.get("rebounds_per_36")) or pd.notna(row.get("blocks_per_36")):
-            parts.append("篮板/护筐数据可用于判断前场适配")
-        return "；".join(parts) if parts else "角色判断主要受字段缺失限制，需要人工复核。"
+        usage = row_number(row, "usage_proxy")
+        points = row_number(row, "points_per_36")
+        assists = row_number(row, "assists_per_36")
+        rebounds = row_number(row, "rebounds_per_36")
+        blocks = row_number(row, "blocks_per_36")
+        if usage is not None:
+            parts.append(f"使用率代理 {usage:.2f}")
+        if points is not None:
+            parts.append(f"每36分钟 {points:.1f} 分")
+        if assists is not None:
+            parts.append(f"每36分钟 {assists:.1f} 次助攻")
+        if rebounds is not None:
+            parts.append(f"每36分钟 {rebounds:.1f} 个篮板")
+        if blocks is not None:
+            parts.append(f"每36分钟 {blocks:.1f} 次盖帽")
+        return "；".join(parts) if parts else "角色相关统计不足，需要人工复核。"
 
-    # 功能：说明球员的得分效率表现。
     def efficiency_reason(row: pd.Series) -> str:
-        available = [c for c in ["ts_pct", "fg_pct", "three_pct", "ft_pct"] if pd.notna(row.get(c))]
-        if available:
-            return "有效率字段可参考：" + "、".join(available)
-        return "效率字段缺失，不能仅凭得分产量判断。"
+        labels = {"ts_pct": "真实命中率", "fg_pct": "投篮命中率", "three_pct": "三分命中率", "ft_pct": "罚球命中率"}
+        parts = []
+        for field, label in labels.items():
+            value = row_number(row, field)
+            if value is not None:
+                parts.append(f"{label} {rate_text(value)}")
+        return "；".join(parts) if parts else "效率字段缺失，不能仅凭得分产量判断。"
 
-    # 功能：说明球员所在联赛与历史 CBA 招募路径的关系。
     def pathway_reason(row: pd.Series) -> str:
         league = row.get("league", "")
         source = row.get("source_id", row.get("source", ""))
@@ -312,7 +300,6 @@ def _build_reasons(df: pd.DataFrame, scored: pd.DataFrame, risks: pd.DataFrame) 
             bits.append("有过往 CBA 经历")
         return "；".join(bits) if bits else "路径信息有限。"
 
-    # 功能：说明球员的出勤和上场时间情况。
     def availability_reason(row: pd.Series) -> str:
         games = row.get("games")
         mpg = row.get("minutes_per_game")
@@ -325,7 +312,6 @@ def _build_reasons(df: pd.DataFrame, scored: pd.DataFrame, risks: pd.DataFrame) 
             pieces.append(f"数据完整度 {float(row.get('data_completeness_score')):.2f}")
         return "；".join(pieces) if pieces else "可用性字段不足。"
 
-    # 功能：汇总该球员需要人工核查的风险。
     def risk_summary(idx: int) -> str:
         flags = []
         if bool(risks.loc[idx, "low_minutes_risk_flag"]):
@@ -352,8 +338,6 @@ def _build_reasons(df: pd.DataFrame, scored: pd.DataFrame, risks: pd.DataFrame) 
     )
     return out
 
-
-# 功能：为候选人添加角色适配分、解释文字和风险提示。
 def add_role_aware_scores(df: pd.DataFrame, *, write_reports: bool = False, source_label: str = "selected_dataset") -> pd.DataFrame:
     if df is None or df.empty:
         return df.copy() if df is not None else pd.DataFrame()
@@ -389,8 +373,6 @@ def add_role_aware_scores(df: pd.DataFrame, *, write_reports: bool = False, sour
             evaluation.to_csv(EVALUATION_OUTPUT, index=False, encoding="utf-8-sig")
     return out
 
-
-# 功能：汇总当前处理结果的关键数量和比例。
 def _summary(df: pd.DataFrame, source_label: str) -> pd.DataFrame:
     rows = [{"metric": "source_label", "value": source_label}, {"metric": "rows", "value": len(df)}]
     for col in ROLE_SCORE_COLUMNS + ["availability_score"]:
@@ -409,22 +391,16 @@ def _summary(df: pd.DataFrame, source_label: str) -> pd.DataFrame:
             rows.append({"metric": f"{col}_count", "value": int(df[col].fillna(False).astype(bool).sum())})
     return pd.DataFrame(rows)
 
-
-# 功能：计算前 K 名候选中的真实正例比例。
 def _precision_at_k(y: pd.Series, k: int) -> float:
     top = y.head(min(k, len(y)))
     return float(top.mean()) if len(top) else 0.0
 
-
-# 功能：计算前 K 名候选覆盖了多少真实正例。
 def _recall_at_k(y: pd.Series, k: int) -> float:
     positives = y.sum()
     if positives <= 0:
         return 0.0
     return float(y.head(min(k, len(y))).sum() / positives)
 
-
-# 功能：在存在真实标签时计算可选的历史评估指标。
 def _optional_evaluation(df: pd.DataFrame) -> pd.DataFrame:
     if "signed_cba_next_season" not in df.columns:
         return pd.DataFrame()
@@ -457,8 +433,6 @@ def _optional_evaluation(df: pd.DataFrame) -> pd.DataFrame:
         )
     return pd.DataFrame(rows)
 
-
-# 功能：读取推荐文件并补充角色评分和解释字段。
 def enrich_file(input_path: str | Path, output_path: str | Path | None = None, *, write_reports: bool = True) -> pd.DataFrame:
     input_path = Path(input_path)
     df = pd.read_csv(input_path, encoding="utf-8-sig")
@@ -469,8 +443,6 @@ def enrich_file(input_path: str | Path, output_path: str | Path | None = None, *
         enriched.to_csv(output_path, index=False, encoding="utf-8-sig")
     return enriched
 
-
-# 功能：执行角色画像评分和解释字段生成流程。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Add transparent role-aware scouting scores to recommendation files.")
     parser.add_argument("--input", default=str(DEFAULT_INPUT), help="Recommendation CSV to enrich.")
@@ -484,7 +456,6 @@ def main() -> None:
         print(f"Wrote role-aware recommendations to {output}")
     print(f"Wrote role scoring summary to {SUMMARY_OUTPUT}")
     print(f"Wrote role scoring thresholds to {THRESHOLDS_OUTPUT}")
-
 
 if __name__ == "__main__":
     main()

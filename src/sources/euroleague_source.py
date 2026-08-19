@@ -78,12 +78,10 @@ class EuroleagueApiClient:
     cache_dir: Path = CACHE_DIR / "euroleague"
     delay_seconds: float = 0.5
 
-    # 功能：完成对象创建后的缓存、限速或目录初始化。
     def __post_init__(self) -> None:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self._last_request_at = 0.0
 
-    # 功能：从 EuroLeague 接口读取球员赛季统计。
     def fetch_player_stats(self, competition_code: str, season_code: str, stat_kind: str) -> dict[str, Any]:
         cache_path = self.cache_dir / f"{competition_code}_{season_code}_{stat_kind}_per_game.json"
         if cache_path.exists():
@@ -113,12 +111,10 @@ class EuroleagueApiClient:
 class EuroleagueSource(PlayerHistorySource):
     name = "euroleague"
 
-    # 功能：保存初始化参数，并准备当前数据源需要的目录和配置。
     def __init__(self, fuzzy_threshold: int = 90) -> None:
         self.client = EuroleagueApiClient()
         self.fuzzy_threshold = fuzzy_threshold
 
-    # 功能：读取当前数据源并整理成统一的球员赛季记录。
     def collect(
         self,
         cba_labels: pd.DataFrame,
@@ -222,7 +218,6 @@ class EuroleagueSource(PlayerHistorySource):
             self.normalise_summary_schema(summary),
         )
 
-    # 功能：读取一个 EuroLeague/EuroCup 赛季的基础和高级统计。
     def _fetch_competition_season(self, competition_code: str, season_code: str, season_start_year: int) -> pd.DataFrame:
         traditional_raw = self.client.fetch_player_stats(competition_code, season_code, "traditional")
         traditional = self._standardise_traditional(
@@ -240,7 +235,6 @@ class EuroleagueSource(PlayerHistorySource):
             LOGGER.warning("Euroleague advanced stats unavailable for %s; keeping basic stats only: %s", season_code, exc)
             return traditional
 
-    # 功能：把来源中的基础技术统计映射到统一结构。
     def _standardise_traditional(
         self,
         players: list[dict[str, Any]],
@@ -288,7 +282,6 @@ class EuroleagueSource(PlayerHistorySource):
         out["source_player_name_key"] = out["source_player_name"].map(player_name_key)
         return out
 
-    # 功能：把来源中的高级统计映射到统一结构。
     def _standardise_advanced(self, players: list[dict[str, Any]]) -> pd.DataFrame:
         rows = []
         for item in players:
@@ -310,7 +303,6 @@ class EuroleagueSource(PlayerHistorySource):
             )
         return pd.DataFrame(rows)
 
-    # 功能：生成数据源没有返回可用记录时的摘要。
     def _summary_no_source_data(self, players: pd.DataFrame) -> pd.DataFrame:
         summary = pd.DataFrame(
             {
@@ -330,7 +322,6 @@ class EuroleagueSource(PlayerHistorySource):
         return self.normalise_summary_schema(summary)
 
 
-# 功能：把百分比文本转换成零到一之间的数值。
 def _parse_percent(value: Any) -> float | pd.NA:
     if value is None or pd.isna(value):
         return pd.NA
@@ -344,7 +335,6 @@ def _parse_percent(value: Any) -> float | pd.NA:
         return pd.NA
 
 
-# 功能：把多个可用字段安全相加。
 def _sum_values(*values: Any) -> float | pd.NA:
     numeric = [pd.to_numeric(value, errors="coerce") for value in values]
     numeric = [value for value in numeric if not pd.isna(value)]
@@ -353,7 +343,6 @@ def _sum_values(*values: Any) -> float | pd.NA:
     return float(sum(numeric))
 
 
-# 功能：根据命中数和出手数计算投篮命中率。
 def _calculate_fg_pct(item: dict[str, Any]) -> float | pd.NA:
     made = _sum_values(item.get("twoPointersMade"), item.get("threePointersMade"))
     attempted = _sum_values(item.get("twoPointersAttempted"), item.get("threePointersAttempted"))
@@ -362,7 +351,6 @@ def _calculate_fg_pct(item: dict[str, Any]) -> float | pd.NA:
     return float(made) / float(attempted)
 
 
-# 功能：统一 EuroLeague 球员姓名的显示和匹配格式。
 def _normalise_euroleague_player_name(raw_name: str | None) -> str:
     if not raw_name:
         return ""

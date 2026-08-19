@@ -7,12 +7,10 @@ from .literature_rank_utils import ensure_model_columns, split_years, zscore
 from .utils import PROCESSED_DIR, REPORTS_DIR, ensure_data_dirs
 
 
-# 功能：根据数据来源计算基础可靠度分数。
 def _source_score(df: pd.DataFrame, col: str) -> pd.Series:
     return zscore(df[col]).rank(pct=True).fillna(0.5)
 
 
-# 功能：计算候选人与历史 CBA 外援表现画像的相似程度。
 def _similarity_to_imports(train_pos: pd.DataFrame, test: pd.DataFrame, cols: list[str]) -> pd.Series:
     if train_pos.empty:
         return pd.Series(0.0, index=test.index)
@@ -22,7 +20,6 @@ def _similarity_to_imports(train_pos: pd.DataFrame, test: pd.DataFrame, cols: li
     return (1 / (1 + dist)).fillna(0)
 
 
-# 功能：只用更早赛季标签计算角色、联赛和来源正例率，避免未来泄漏。
 def _add_train_only_rates(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     for col in ["role_positive_rate_train_only", "league_positive_rate_train_only", "source_positive_rate_train_only", "role_similarity_to_historical_cba_imports", "league_pathway_score_train_only"]:
@@ -46,7 +43,6 @@ def _add_train_only_rates(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# 功能：执行 CBA 招募适配特征计算并保存结果。
 def run() -> None:
     ensure_data_dirs()
     path = PROCESSED_DIR / "labelled_candidate_dataset_multisource_gleague_with_roles.csv"

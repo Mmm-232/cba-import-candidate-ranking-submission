@@ -16,7 +16,6 @@ INPUTS = [
 ]
 
 
-# 功能：读取训练或评估所需的最终候选数据。
 def _load() -> pd.DataFrame:
     selected_path = None
     for path in INPUTS:
@@ -47,19 +46,16 @@ def _load() -> pd.DataFrame:
     return df.reset_index(drop=False).rename(columns={"index": "underlying_row_id"})
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _uniq(values: pd.Series) -> str:
     vals = [str(v) for v in values.dropna().astype(str) if str(v).strip() and str(v).lower() != "nan"]
     return "; ".join(sorted(set(vals)))
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _first(values: pd.Series):
     vals = values.dropna()
     return vals.iloc[0] if not vals.empty else pd.NA
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _weighted_avg(group: pd.DataFrame, col: str) -> float:
     values = pd.to_numeric(group[col], errors="coerce")
     weights = pd.to_numeric(group.get("minutes", pd.Series(index=group.index, dtype=float)), errors="coerce")
@@ -71,12 +67,10 @@ def _weighted_avg(group: pd.DataFrame, col: str) -> float:
     return float(values.mean()) if values.notna().any() else float("nan")
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _has_token(values: pd.Series, token: str) -> bool:
     return values.fillna("").astype(str).str.lower().str.contains(token.lower(), regex=False).any()
 
 
-# 功能：处理当前步骤所需的数据，并返回整理后的结果。
 def _aggregate_group(group: pd.DataFrame) -> dict:
     completeness = pd.to_numeric(group["data_completeness_score"], errors="coerce").fillna(-1)
     fit = pd.to_numeric(group["cba_import_fit_score"], errors="coerce").fillna(-1)
@@ -136,7 +130,6 @@ def _aggregate_group(group: pd.DataFrame) -> dict:
     return row
 
 
-# 功能：执行多来源球员赛季聚合并保存最终候选数据。
 def run() -> None:
     ensure_data_dirs()
     df = _load()

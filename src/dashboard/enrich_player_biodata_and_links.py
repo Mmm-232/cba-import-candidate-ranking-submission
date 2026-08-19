@@ -40,14 +40,12 @@ NBA_BIODATA_FIELDS = [
 ]
 
 
-# 功能：读取本地保存的 NBA 球员资料缓存。
 def _load_nba_cache() -> pd.DataFrame:
     if NBA_CACHE.exists():
         return pd.read_csv(NBA_CACHE)
     return pd.DataFrame(columns=NBA_BIODATA_FIELDS)
 
 
-# 功能：保存 NBA 球员资料缓存。
 def _save_nba_cache(cache: pd.DataFrame) -> None:
     NBA_CACHE.parent.mkdir(parents=True, exist_ok=True)
     for col in NBA_BIODATA_FIELDS:
@@ -56,13 +54,11 @@ def _save_nba_cache(cache: pd.DataFrame) -> None:
     cache[NBA_BIODATA_FIELDS].to_csv(NBA_CACHE, index=False)
 
 
-# 功能：判断记录是否来自 NBA 或 G League。
 def _is_nba_or_gleague(row: pd.Series) -> bool:
     text = " ".join(str(row.get(c, "")) for c in ["source", "source_id", "league"]).lower()
     return "gleague" in text or "g league" in text or "nba" in text
 
 
-# 功能：根据出生日期计算球员在赛季开始时的年龄。
 def _age_at_season_start(birthdate: object, recommendation_season: object) -> object:
     if pd.isna(birthdate) or pd.isna(recommendation_season):
         return pd.NA
@@ -77,12 +73,10 @@ def _age_at_season_start(birthdate: object, recommendation_season: object) -> ob
         return pd.NA
 
 
-# 功能：生成指定关键词的 Google 搜索链接。
 def _google_search_url(query: str) -> str:
     return "https://www.google.com/search?q=" + quote_plus(query)
 
 
-# 功能：生成球员资料核查所需的官方或公共搜索链接。
 def _official_links(row: pd.Series) -> dict[str, object]:
     name = str(row.get("player_name_raw", "")).strip()
     league = str(row.get("league", "")).strip()
@@ -114,7 +108,6 @@ def _official_links(row: pd.Series) -> dict[str, object]:
     return out
 
 
-# 功能：建立标准姓名到 NBA 静态球员资料的匹配表。
 def _nba_static_match_map() -> tuple[dict[str, list[dict]], str]:
     try:
         from nba_api.stats.static import players
@@ -130,7 +123,6 @@ def _nba_static_match_map() -> tuple[dict[str, list[dict]], str]:
     return mapping, "ok"
 
 
-# 功能：读取 NBA 接口中的球员身高、体重和出生日期。
 def _fetch_common_player_info(nba_player_id: int) -> dict[str, object]:
     from nba_api.stats.endpoints import commonplayerinfo
 
@@ -153,7 +145,6 @@ def _fetch_common_player_info(nba_player_id: int) -> dict[str, object]:
     }
 
 
-# 功能：为可匹配的 NBA/G League 候选人补充个人资料。
 def _nba_biodata_for_candidates(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     logs: list[str] = []
     cache = _load_nba_cache()
@@ -217,7 +208,6 @@ def _nba_biodata_for_candidates(df: pd.DataFrame) -> tuple[pd.DataFrame, list[st
     return cache, logs
 
 
-# 功能：用人工核查文件覆盖或补充自动获取的球员资料。
 def _merge_manual_overrides(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     if not MANUAL_OVERRIDES.exists():
         return df, 0
@@ -252,7 +242,6 @@ def _merge_manual_overrides(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     return df, applied
 
 
-# 功能：为推荐名单补充球员资料和人工核查链接。
 def enrich() -> pd.DataFrame:
     if not FRONTEND_INPUT.exists():
         raise FileNotFoundError(f"Missing {FRONTEND_INPUT}. Run python -m src.dashboard.export_frontend_recommendations first.")

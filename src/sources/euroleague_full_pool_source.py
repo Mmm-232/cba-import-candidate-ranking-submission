@@ -18,7 +18,6 @@ class EuroleagueFullPoolSource(EuroleagueSource):
     name = "euroleague_api"
     source_name = "euroleague-api / EuroLeague and EuroCup API"
 
-    # 功能：收集指定赛季的完整 EuroLeague/EuroCup 候选池。
     def collect_full_pool(self, start_year: int = 2020, end_year: int = 2024) -> pd.DataFrame:
         frames = []
         for year in range(start_year, end_year + 1):

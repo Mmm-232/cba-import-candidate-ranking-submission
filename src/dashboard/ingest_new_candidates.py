@@ -96,7 +96,6 @@ COLUMN_ALIASES = {
 }
 
 
-# 功能：清理输入字段名，方便识别不同写法。
 def _normalise_col(col: object) -> str:
     text = str(col).strip().lower()
     text = text.replace("%", "%")
@@ -105,7 +104,6 @@ def _normalise_col(col: object) -> str:
     return COLUMN_ALIASES.get(text, COLUMN_ALIASES.get(text.replace("_", ""), text))
 
 
-# 功能：读取 CSV、Excel 或 JSON 候选人文件。
 def _load_input(path: Path) -> pd.DataFrame:
     suffix = path.suffix.lower()
     if suffix == ".csv":
@@ -121,7 +119,6 @@ def _load_input(path: Path) -> pd.DataFrame:
     raise ValueError(f"Unsupported input file type: {path.suffix}")
 
 
-# 功能：把用户文件中的字段映射到项目统一字段。
 def _normalise_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     seen: dict[str, int] = {}
@@ -134,7 +131,6 @@ def _normalise_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# 功能：记录一条输入数据检查警告。
 def _warning(row: pd.Series) -> str:
     warnings = []
     if row.get("missing_required_fields"):
@@ -146,7 +142,6 @@ def _warning(row: pd.Series) -> str:
     return "; ".join(warnings)
 
 
-# 功能：读取并检查用户候选人文件，生成可评分的标准表。
 def ingest_candidates(
     input_path: str | Path,
     output_path: str | Path = DEFAULT_OUTPUT,
@@ -244,7 +239,6 @@ def ingest_candidates(
     return valid[OUTPUT_COLUMNS]
 
 
-# 功能：执行用户候选文件读取、校验和标准化流程。
 def main() -> None:
     parser = argparse.ArgumentParser(description="Ingest user-provided new CBA import candidate player-season data.")
     parser.add_argument("--input", required=True, help="Path to CSV, Excel, or JSON file.")

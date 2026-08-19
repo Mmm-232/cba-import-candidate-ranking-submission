@@ -1,7 +1,4 @@
-"""
-Module: app.py
-Purpose: Streamlit dashboard entrypoint for candidate recommendation visualization, bilingual UI, data-source switching, and scouting workflow interactions.
-"""
+"""Interactive Streamlit dashboard for CBA import-candidate scouting."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -129,8 +126,6 @@ TABLE_COLUMNS = [
     "reason_summary",
 ]
 
-
-# 功能：读取当前选中的推荐数据，并在缺少正式文件时使用演示数据。
 def load_data(display_name: str | None = None) -> tuple[pd.DataFrame, dict[str, object]]:
     df, source_meta = load_selected_recommendations(display_name)
     if df.empty:
@@ -146,29 +141,19 @@ def load_data(display_name: str | None = None) -> tuple[pd.DataFrame, dict[str, 
         df = df.sort_values("rank")
     return df, source_meta
 
-
-
-
-# 功能：安全取得数据列；缺失时返回同长度的空列。
 def safe_series(df: pd.DataFrame, col: str, default: object = 0) -> pd.Series:
     if col in df.columns:
         return df[col]
     return pd.Series(default, index=df.index)
 
-
-# 功能：安全取得数值列，并把无法解析的内容设为空值。
 def safe_numeric_series(df: pd.DataFrame, col: str, default: float = 0.0) -> pd.Series:
     return pd.to_numeric(safe_series(df, col, default), errors="coerce").fillna(default)
 
-
-# 功能：安全统计布尔条件为真的记录数量。
 def safe_bool_count(df: pd.DataFrame, col: str) -> int:
     if col not in df.columns:
         return 0
     return int(safe_numeric_series(df, col, 0.0).gt(0).sum())
 
-
-# 功能：把空值转换成适合界面显示的内容。
 def format_missing_safe(value: object) -> str:
     try:
         if pd.isna(value) or value == "":
@@ -177,8 +162,6 @@ def format_missing_safe(value: object) -> str:
         return "-"
     return str(value)
 
-
-# 功能：从多个候选字段中取第一个可用值。
 def _first_available_value(df: pd.DataFrame, columns: list[str]) -> object:
     for col in columns:
         if col in df.columns and df[col].notna().any():
@@ -188,43 +171,27 @@ def _first_available_value(df: pd.DataFrame, columns: list[str]) -> object:
                 return values.iloc[0]
     return "-"
 
-# 功能：把单个值整理成适合 Dashboard 显示的文本。
-def _display_value(value: object) -> str:
-    if pd.isna(value) or value == "":
-        return "-"
-    return str(value)
-
-
-# 功能：把数值格式化成百分比文本。
 def _format_percent(value: object) -> str:
     number = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
     if pd.isna(number):
         return "-"
     return f"{number:.1%}" if 0 <= number <= 1 else f"{number:.2f}"
 
-
-# 功能：按指定小数位格式化数值。
 def _format_number(value: object) -> str:
     number = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
     if pd.isna(number):
         return "-"
     return f"{number:.2f}"
 
-
-# 功能：读取当前 Dashboard 选择的界面语言。
 def _dashboard_lang() -> str:
     return str(st.session_state.get("language", "zh"))
 
-
-# 功能：把真假值转换成当前语言下的可读文本。
 def _format_bool(value: object, lang: str | None = None) -> str:
     number = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
     if pd.isna(number):
         return "-"
     return t("yes", lang or _dashboard_lang()) if number > 0 else t("no", lang or _dashboard_lang())
 
-
-# 功能：把原始字段名转换成当前语言下的友好标签。
 def display_field_label(field_name: str, lang: str) -> str:
     key = f"field_{field_name}"
     translated = t(key, lang)
@@ -236,29 +203,25 @@ def display_field_label(field_name: str, lang: str) -> str:
     cleaned = str(field_name).replace("_", " ").strip()
     return cleaned.title() if lang == "en" else cleaned
 
-
 ROLE_VALUE_ALIASES = {
     "high_usage_ball_handler": "high_usage_ball_handler",
     "scoring_import": "scoring_import",
     "playmaking_guard": "playmaking_guard",
     "frontcourt_import": "frontcourt_import",
     "low_risk_availability": "low_risk_availability",
-    "\u6301\u7403\u6838\u5fc3": "high_usage_ball_handler",
-    "\u5f97\u5206\u578b\u5916\u63f4": "scoring_import",
-    "\u7ec4\u7ec7\u540e\u536b": "playmaking_guard",
-    "\u524d\u573a/\u5185\u7ebf\u5916\u63f4": "frontcourt_import",
-    "\u4f4e\u98ce\u9669\u7a33\u5b9a\u578b\u5019\u9009": "low_risk_availability",
+    "持球核心": "high_usage_ball_handler",
+    "得分型外援": "scoring_import",
+    "组织后卫": "playmaking_guard",
+    "前场/内线外援": "frontcourt_import",
+    "低风险稳定型候选": "low_risk_availability",
 }
 
-
-# 功能：把内部角色类型转换成当前语言下的角色名称。
 def display_role_profile_value(value: object, lang: str) -> str:
     text = format_missing_safe(value)
     role_key = ROLE_VALUE_ALIASES.get(text)
     if role_key:
         return t(f"role_{role_key}", lang)
     return text
-
 
 ROLE_REASON_FIELDS = {
     "best_role_profile",
@@ -270,59 +233,53 @@ ROLE_REASON_FIELDS = {
     "final_reason_summary",
 }
 
-
-# 功能：从候选人记录中安全读取一个数值。
 def _numeric_value(row: pd.Series, field: str) -> float | None:
     if field not in row.index:
         return None
     value = pd.to_numeric(pd.Series([row.get(field)]), errors="coerce").iloc[0]
     return None if pd.isna(value) else float(value)
 
-
-# 功能：判断候选人记录中的字段是否含有效数值。
 def _has_numeric_value(row: pd.Series, field: str) -> bool:
     return _numeric_value(row, field) is not None
 
-
-# 功能：格式化推荐理由中需要展示的数字。
 def _format_reason_number(value: float | None, digits: int = 1) -> str:
     if value is None:
         return "-"
     return f"{value:.{digits}f}"
 
-
-# 功能：生成英文角色适配说明。
 def _english_role_fit_reason(row: pd.Series) -> str:
     parts: list[str] = []
-    if _has_numeric_value(row, "usage_proxy"):
-        parts.append("Usage proxy is available as a useful role indicator")
-    if _has_numeric_value(row, "points_per_36"):
-        parts.append("Points per 36 can be used to assess scoring volume")
-    if _has_numeric_value(row, "assists_per_36") or _has_numeric_value(row, "assists"):
-        parts.append("Playmaking indicators are available")
-    position = str(row.get("position", "") or "").lower()
-    if _has_numeric_value(row, "rebounds_per_36") or _has_numeric_value(row, "blocks_per_36") or any(token in position for token in ["f", "c", "frontcourt", "forward", "center", "centre"]):
-        parts.append("Frontcourt indicators are available")
+    usage = _numeric_value(row, "usage_proxy")
+    points = _numeric_value(row, "points_per_36")
+    assists_36 = _numeric_value(row, "assists_per_36")
+    rebounds_36 = _numeric_value(row, "rebounds_per_36")
+    blocks_36 = _numeric_value(row, "blocks_per_36")
+
+    if usage is not None:
+        parts.append(f"usage proxy {_format_reason_number(usage, 2)}")
+    if points is not None:
+        parts.append(f"{_format_reason_number(points, 1)} points per 36")
+    if assists_36 is not None:
+        parts.append(f"{_format_reason_number(assists_36, 1)} assists per 36")
+    if rebounds_36 is not None:
+        parts.append(f"{_format_reason_number(rebounds_36, 1)} rebounds per 36")
+    if blocks_36 is not None:
+        parts.append(f"{_format_reason_number(blocks_36, 1)} blocks per 36")
     return "; ".join(parts) if parts else "Role indicators are limited or missing"
 
-
-# 功能：生成英文效率表现说明。
 def _english_efficiency_reason(row: pd.Series) -> str:
-    if _has_numeric_value(row, "ts_pct"):
-        return "Efficiency field available: TS%"
-    if any(_has_numeric_value(row, field) for field in ["fg_pct", "three_pct", "ft_pct"]):
-        return "Shooting percentage fields are available"
-    return "Efficiency fields are limited or missing"
+    parts: list[str] = []
+    for field, label in [("ts_pct", "TS%"), ("fg_pct", "FG%"), ("three_pct", "3P%"), ("ft_pct", "FT%")]:
+        value = _numeric_value(row, field)
+        if value is not None:
+            parts.append(f"{label} {_format_percent(value)}")
+    return "; ".join(parts) if parts else "Efficiency fields are limited or missing"
 
-
-# 功能：生成英文联赛路径说明。
 def _english_pathway_reason(row: pd.Series) -> str:
     league = format_missing_safe(row.get("league", "-"))
     source = format_missing_safe(row.get("source_id", row.get("source", "-")))
     return f"League: {league}; Source: {source}"
 
-
-# 功能：生成英文出勤和可用性说明。
 def _english_availability_reason(row: pd.Series) -> str:
     parts: list[str] = []
     mpg = _numeric_value(row, "minutes_per_game")
@@ -336,27 +293,20 @@ def _english_availability_reason(row: pd.Series) -> str:
         parts.append(f"Games: {_format_reason_number(games, 0)}")
     return "; ".join(parts) if parts else "Availability fields are limited or missing"
 
-
-# 功能：生成英文风险提示。
 def _english_risk_summary(row: pd.Series, value: object) -> str:
     text = translate_phrase_text(format_missing_safe(value), "en")
     if text in {"-", "", "nan", "None"}:
         return "No major data-quality risk detected"
-    if "?" not in text and "??" not in text and "??" not in text:
-        return text
-    translated = translate_phrase_text(text, "en")
-    return translated if translated != text else "No major data-quality risk detected"
+    if "\ufffd" in text or "??" in text:
+        return "Risk note unavailable because the source text could not be decoded"
+    return text
 
-
-# 功能：汇总生成英文推荐理由。
 def _english_final_reason_summary(row: pd.Series) -> str:
     role = display_role_profile_value(row.get("best_role_profile", ""), "en")
     role_reason = _english_role_fit_reason(row)
     risk = _english_risk_summary(row, row.get("risk_summary", ""))
     return f"{role}; {role_reason}; risk note: {risk[:1].lower() + risk[1:] if risk else risk}"
 
-
-# 功能：按界面语言整理角色评分和推荐理由。
 def format_role_reason_value(field_name: str, value: object, row: pd.Series, lang: str) -> str:
     if field_name == "best_role_profile":
         return display_role_profile_value(value, lang)
@@ -377,11 +327,6 @@ def format_role_reason_value(field_name: str, value: object, row: pd.Series, lan
     if field_name == "final_reason_summary":
         return _english_final_reason_summary(row)
     return translate_phrase_text(format_missing_safe(value), lang)
-
-
-
-
-
 
 STREAMLIT_DISPLAY_NUMERIC_COLUMNS = {
     "rank",
@@ -410,8 +355,6 @@ STREAMLIT_DISPLAY_NUMERIC_COLUMNS = {
     "score_low_risk_availability",
 }
 
-
-# 功能：复制并整理表格字段类型，避免 Streamlit 显示报错。
 def sanitize_dataframe_for_streamlit(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     for col in out.columns:
@@ -427,7 +370,6 @@ def sanitize_dataframe_for_streamlit(df: pd.DataFrame) -> pd.DataFrame:
             out[col] = out[col].fillna("").astype(str)
     return out
 
-# 功能：把表格整理成适合 Streamlit 展示的格式。
 def _format_table(df: pd.DataFrame) -> pd.DataFrame:
     shown = df[[c for c in TABLE_COLUMNS if c in df.columns and c not in HIDDEN_URL_COLUMNS]].copy()
     for col in shown.columns:
@@ -438,13 +380,9 @@ def _format_table(df: pd.DataFrame) -> pd.DataFrame:
         elif col in NUMERIC_COLUMNS and col != "rank":
             shown[col] = shown[col].map(_format_number)
         else:
-            shown[col] = shown[col].map(_display_value)
+            shown[col] = shown[col].map(format_missing_safe)
     return shown
 
-
-
-
-# 功能：根据当前数据量生成不会越界的 Top N 选择器。
 def safe_top_n_selector(df: pd.DataFrame, default_options: list[int] | None = None, lang: str | None = None) -> int:
     lang = lang or _dashboard_lang()
     default_options = default_options or [20, 50, 100, 300]
@@ -465,7 +403,6 @@ def safe_top_n_selector(df: pd.DataFrame, default_options: list[int] | None = No
     default_index = options.index(default_value) if default_value in options else len(options) - 1
     return int(st.sidebar.selectbox(t("top_n", lang), options, index=default_index))
 
-# 功能：按照所选角色画像对应的分数重新排序。
 def _sort_for_role_profile(df: pd.DataFrame, role_profile: str) -> pd.DataFrame:
     config = ROLE_PROFILE_OPTIONS.get(role_profile, ROLE_PROFILE_OPTIONS["all"])
     score_col = config.get("score")
@@ -487,8 +424,6 @@ def _sort_for_role_profile(df: pd.DataFrame, role_profile: str) -> pd.DataFrame:
         return out.sort_values("rank")
     return out
 
-
-# 功能：应用联赛、来源、出场时间和姓名等侧边栏筛选条件。
 def filtered_data(df: pd.DataFrame, lang: str) -> pd.DataFrame:
     st.sidebar.header(t("filters", lang))
     top_n = safe_top_n_selector(df, lang=lang)
@@ -543,7 +478,6 @@ def filtered_data(df: pd.DataFrame, lang: str) -> pd.DataFrame:
     if top_n > 0:
         out = out.head(top_n)
     return out
-# 功能：显示一个可安全打开外部网页的按钮。
 def _link_button(label: str, url: object, lang: str | None = None) -> None:
     url_text = str(url or "").strip()
     if not url_text or url_text.lower() in {"nan", "none"}:
@@ -554,8 +488,6 @@ def _link_button(label: str, url: object, lang: str | None = None) -> None:
     else:
         st.markdown(f"[{label}]({url_text})")
 
-
-# 功能：生成球员的 Basketball-Reference 手动搜索链接。
 def _basketball_reference_search_url(player: pd.Series) -> str:
     existing = player.get("basketball_reference_search_url")
     if pd.notna(existing) and str(existing).strip():
@@ -563,26 +495,17 @@ def _basketball_reference_search_url(player: pd.Series) -> str:
     query = f'site:basketball-reference.com "{player.get("player_name_raw", "")}" basketball'
     return "https://www.google.com/search?q=" + quote_plus(query)
 
-
-
-
-# 功能：读取当前推荐数据源的登记信息。
 def _selected_source_metadata(source_meta: dict[str, object]) -> pd.DataFrame:
     keys = ["display_name", "source_type", "season", "league", "row_count", "created_at", "notes"]
-    rows = [{"field": key, "value": _display_value(source_meta.get(key, ""))} for key in keys]
+    rows = [{"field": key, "value": format_missing_safe(source_meta.get(key, ""))} for key in keys]
     return pd.DataFrame(rows)
 
-
-# 功能：取得默认推荐数据源的显示名称。
 def _default_display_name(prefix: str) -> str:
     return f"{prefix} {datetime.now(timezone.utc).strftime('%Y-%m-%d %H%M')}"
 
-# 功能：整理主推荐名单需要展示的字段。
 def candidate_table(df: pd.DataFrame) -> None:
     st.dataframe(sanitize_dataframe_for_streamlit(_format_table(df)), width="stretch", hide_index=True)
 
-
-# 功能：整理用户新数据推荐名单需要展示的字段。
 def new_candidate_table(df: pd.DataFrame) -> None:
     cols = [
         "new_rank",
@@ -622,31 +545,23 @@ def new_candidate_table(df: pd.DataFrame) -> None:
         elif col in NUMERIC_COLUMNS or col in {"new_rank", "recommendation_score"}:
             shown[col] = shown[col].map(_format_number)
         else:
-            shown[col] = shown[col].map(_display_value)
+            shown[col] = shown[col].map(format_missing_safe)
     st.dataframe(sanitize_dataframe_for_streamlit(shown), width="stretch", hide_index=True)
 
-# 功能：生成球员人工搜索与核查链接表。
 def _search_links_table(df: pd.DataFrame) -> pd.DataFrame:
     cols = ["rank", "player_name_raw", "league", "team", "video_search_query", "youtube_search_url", "google_video_search_url"]
     shown = df[[c for c in cols if c in df.columns]].copy()
     return shown
 
-
-
-
-
-
-# 功能：生成侧边栏数据源选项的显示文本。
 def _sidebar_display_name(name: object, max_length: int = 48) -> str:
     text = format_missing_safe(name)
     return text if len(text) <= max_length else text[: max_length - 1] + "..."
 
-# 功能：显示数据源信息并提供受保护的删除操作。
-def _source_management_panel(source_meta: dict[str, object], sources: pd.DataFrame, lang: str) -> None:
+def _source_management_panel(source_meta: dict[str, object], lang: str) -> None:
     with st.sidebar.expander(t("manage_sources", lang), expanded=False):
         rows = []
         for key in ["display_name", "source_type", "row_count", "created_at"]:
-            rows.append({"field": field_label(key, lang), "value": _display_value(source_meta.get(key, ""))})
+            rows.append({"field": field_label(key, lang), "value": format_missing_safe(source_meta.get(key, ""))})
         st.table(sanitize_dataframe_for_streamlit(pd.DataFrame(rows)))
 
         if not is_user_source(source_meta):
@@ -666,38 +581,28 @@ def _source_management_panel(source_meta: dict[str, object], sources: pd.DataFra
             st.success(t("source_deleted", lang, name=result.get("deleted_display_name", "")))
             st.rerun()
 
-
-# 功能：整理当前可选的数据源清单。
 def _available_sources_table(sources: pd.DataFrame) -> pd.DataFrame:
     cols = ["display_name", "source_type", "row_count", "created_at", "recommendation_file"]
     return sources[[c for c in cols if c in sources.columns]].copy()
 
-
-# 功能：生成用于查找指定球员的搜索关键词。
 def _search_query(player: pd.Series) -> str:
     name = str(player.get("player_name_raw", "") or "").strip()
     league = str(player.get("league", "") or "").strip()
     query = f"{name} {league} basketball highlights".strip()
     return query or f"{name} basketball highlights".strip()
 
-
-# 功能：生成球员的 YouTube 手动搜索链接。
 def _youtube_search_url(player: pd.Series) -> str:
     existing = player.get("youtube_search_url")
     if pd.notna(existing) and str(existing).strip():
         return str(existing)
     return "https://www.youtube.com/results?search_query=" + quote_plus(_search_query(player))
 
-
-# 功能：生成球员的 Google 视频搜索链接。
 def _google_video_search_url(player: pd.Series) -> str:
     existing = player.get("google_video_search_url")
     if pd.notna(existing) and str(existing).strip():
         return str(existing)
     return "https://www.google.com/search?tbm=vid&q=" + quote_plus(_search_query(player))
 
-
-# 功能：生成球员所在联赛或球队的官方信息搜索链接。
 def _league_official_search_url(player: pd.Series) -> str:
     for col in ["league_official_search_url", "official_search_url"]:
         existing = player.get(col)
@@ -708,8 +613,6 @@ def _league_official_search_url(player: pd.Series) -> str:
     query = f'"{name}" "{league}" official basketball stats'
     return "https://www.google.com/search?q=" + quote_plus(query)
 
-
-# 功能：从候选人记录中读取用于摘要展示的值。
 def _summary_value(row: pd.Series, fields: list[str]) -> object:
     for field in fields:
         if field in row.index:
@@ -718,8 +621,6 @@ def _summary_value(row: pd.Series, fields: list[str]) -> object:
                 return value
     return "-"
 
-
-# 功能：把候选人字段整理成详情面板的字段—内容列表。
 def _detail_rows(row: pd.Series, fields: list[tuple[str, str]], percent_fields: set[str] | None = None, bool_fields: set[str] | None = None, lang: str | None = None) -> pd.DataFrame:
     lang = lang or _dashboard_lang()
     percent_fields = percent_fields or set()
@@ -738,8 +639,6 @@ def _detail_rows(row: pd.Series, fields: list[tuple[str, str]], percent_fields: 
         rows.append({display_field_label("field", lang): display_field_label(label, lang), display_field_label("value", lang): shown})
     return pd.DataFrame(rows)
 
-
-# 功能：显示候选人的表现、背景、角色、风险和核查链接。
 def render_candidate_detail(row: pd.Series, selected_source_metadata: dict[str, object] | None = None, lang: str | None = None) -> None:
     lang = lang or _dashboard_lang()
     st.subheader(str(_summary_value(row, ["player_name_raw"])))
@@ -842,19 +741,13 @@ def render_candidate_detail(row: pd.Series, selected_source_metadata: dict[str, 
     with o3:
         _link_button(t("league_official_search", lang), _league_official_search_url(row), lang)
 
-
-# 功能：调用统一的候选人详情面板。
-def detail_panel(player: pd.Series) -> None:
-    render_candidate_detail(player)
-
-# 功能：运行当前模块的主要流程并保存输出。
 def main() -> None:
     st.set_page_config(page_title="CBA Import Candidate Scouting Dashboard", layout="wide")
-    language_options = {"\u4e2d\u6587": "zh", "English": "en"}
+    language_options = {"中文": "zh", "English": "en"}
     current_lang = str(st.session_state.get("language", "zh"))
-    default_lang_display = "English" if current_lang == "en" else "\u4e2d\u6587"
+    default_lang_display = "English" if current_lang == "en" else "中文"
     selected_lang_display = st.sidebar.selectbox(
-        "Language / \u8bed\u8a00",
+        "Language / 语言",
         list(language_options.keys()),
         index=list(language_options.keys()).index(default_lang_display),
     )
@@ -873,7 +766,7 @@ def main() -> None:
     selected_display_name = st.sidebar.selectbox(t("data_source", lang), display_names, index=default_index, format_func=_sidebar_display_name)
     selected_rows = sources[sources["display_name"].astype(str).eq(str(selected_display_name))]
     selected_source_meta = selected_rows.iloc[0].to_dict() if not selected_rows.empty else {}
-    _source_management_panel(selected_source_meta, sources, lang)
+    _source_management_panel(selected_source_meta, lang)
 
     df, source_meta = load_data(selected_display_name)
     if df.empty:
@@ -896,7 +789,7 @@ def main() -> None:
         st.subheader(t("tab_overview", lang))
         c1, c2, c3, c4 = st.columns(4)
         c1.metric(t("candidate_count", lang), len(filtered))
-        c2.metric(t("recommendation_season", lang), _display_value(_first_available_value(df, ["recommendation_season", "season"])))
+        c2.metric(t("recommendation_season", lang), format_missing_safe(_first_available_value(df, ["recommendation_season", "season"])))
         c3.metric(t("league_count", lang), filtered["league"].dropna().astype(str).nunique() if "league" in filtered.columns else 0)
         c4.metric(t("has_cba_experience", lang), safe_bool_count(filtered, "has_prior_cba_experience_before_t"))
         st.write(t("demo_method_statement" if is_demo_source else "final_method_statement", lang))
@@ -1078,7 +971,6 @@ def main() -> None:
             file_name="cba_import_candidate_recommendations.csv",
             mime="text/csv",
         )
-
 
 if __name__ == "__main__":
     main()

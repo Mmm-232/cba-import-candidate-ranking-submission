@@ -1,7 +1,4 @@
-"""
-Module: gleague_nba_api_source.py
-Purpose: G League source adapter using nba_api with per-game-to-total scaling normalization.
-"""
+"""G League source adapter using nba_api with per-game-to-total scaling normalization."""
 from __future__ import annotations
 
 from datetime import date
@@ -40,13 +37,11 @@ COMPLETENESS_COLUMNS = [
 ]
 
 
-# 功能：把 NBA API 赛季格式转换成项目赛季格式。
 def _season_project_label(nba_season: str) -> str:
     start = int(str(nba_season)[:4])
     return f"{start}-{start + 1}"
 
 
-# 功能：根据当前赛季生成下一赛季标签。
 def _next_project_label(nba_season: str) -> str:
     start = int(str(nba_season)[:4])
     return f"{start + 1}-{start + 2}"
@@ -58,11 +53,9 @@ class GLeagueNbaApiSource:
     source_name = "NBA Stats API G League via nba_api"
     source_url_or_file = "nba_api.stats.endpoints.leaguedashplayerstats?LeagueID=20"
 
-    # 功能：保存初始化参数，并准备当前数据源需要的目录和配置。
     def __init__(self, seasons: list[str] | None = None) -> None:
         self.seasons = seasons or SEASONS
 
-    # 功能：从 G League 接口读取未经统一映射的原始统计。
     def collect_raw(self) -> pd.DataFrame:
         frames = []
         for season in self.seasons:
@@ -79,7 +72,6 @@ class GLeagueNbaApiSource:
                 frames.append(df)
         return pd.concat(frames, ignore_index=True, sort=False) if frames else pd.DataFrame()
 
-    # 功能：把 G League 原始统计转换成统一候选人结构。
     def collect_mapped(self) -> pd.DataFrame:
         mapped = []
         for season in self.seasons:
@@ -107,13 +99,11 @@ class GLeagueNbaApiSource:
         out = add_data_completeness_score(out, COMPLETENESS_COLUMNS)
         return out
 
-    # 功能：把 G League 每场基础统计转换为赛季总量字段。
     def _map_basic(self, df: pd.DataFrame, season: str) -> pd.DataFrame:
         out = pd.DataFrame(index=df.index)
         gp = pd.to_numeric(df.get("GP"), errors="coerce")
         min_pg = pd.to_numeric(df.get("MIN"), errors="coerce")
 
-        # 功能：用每场数乘以出场次数，得到正确的赛季总量。
         def total(col: str) -> pd.Series:
             return pd.to_numeric(df.get(col), errors="coerce") * gp
 
@@ -153,7 +143,6 @@ class GLeagueNbaApiSource:
         out["source_team_id"] = df.get("TEAM_ID")
         return out
 
-    # 功能：映射 G League 可用的高级统计字段。
     def _map_advanced(self, df: pd.DataFrame) -> pd.DataFrame:
         if df.empty or "PLAYER_ID" not in df.columns:
             return pd.DataFrame()

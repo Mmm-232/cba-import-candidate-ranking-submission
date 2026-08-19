@@ -27,14 +27,12 @@ PATHWAY_TERMS = {
 }
 
 
-# 函数：ensure_v2_dirs
 def ensure_v2_dirs() -> None:
     ensure_data_dirs()
     V2_PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     V2_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# 函数：load_base_dataset
 def load_base_dataset() -> pd.DataFrame:
     df = pd.read_csv(BASE_PLAYER_SEASON)
     df["season_start_year"] = pd.to_numeric(df["season_start_year"], errors="coerce")
@@ -43,7 +41,6 @@ def load_base_dataset() -> pd.DataFrame:
     return df
 
 
-# 函数：cba_label_path
 def cba_label_path() -> Path:
     for path in CBA_LABEL_CANDIDATES:
         if path.exists():
@@ -51,7 +48,6 @@ def cba_label_path() -> Path:
     raise FileNotFoundError("No CBA label file found.")
 
 
-# 函数：load_cba_labels
 def load_cba_labels() -> pd.DataFrame:
     labels = pd.read_csv(cba_label_path())
     labels["cba_start_year"] = labels["cba_season"].map(season_start_year)
@@ -59,7 +55,6 @@ def load_cba_labels() -> pd.DataFrame:
     return labels
 
 
-# 函数：league_text
 def league_text(row: pd.Series) -> str:
     return " ".join(
         str(row.get(c, ""))
@@ -67,18 +62,15 @@ def league_text(row: pd.Series) -> str:
     ).lower()
 
 
-# 函数：has_pathway
 def has_pathway(row: pd.Series, pathway: str) -> bool:
     text = league_text(row)
     return any(term in text for term in PATHWAY_TERMS[pathway])
 
 
-# 函数：is_australian_nbl_row
 def is_australian_nbl_row(row: pd.Series) -> bool:
     return has_pathway(row, "australian_nbl")
 
 
-# 函数：eligible_overseas_mask
 def eligible_overseas_mask(df: pd.DataFrame, include_nba: bool = False) -> pd.Series:
     league = df["league"] if "league" in df.columns else pd.Series(pd.NA, index=df.index)
     mask = ~league.map(is_chinese_cba_league)
@@ -87,7 +79,6 @@ def eligible_overseas_mask(df: pd.DataFrame, include_nba: bool = False) -> pd.Se
     return mask.fillna(False)
 
 
-# 函数：add_future_cba_labels
 def add_future_cba_labels(df: pd.DataFrame, labels: pd.DataFrame) -> pd.DataFrame:
     cba_years = labels.groupby("player_name_key")["cba_start_year"].apply(lambda s: sorted(set(pd.to_numeric(s, errors="coerce").dropna().astype(int))))
     out = df.copy()
@@ -114,7 +105,6 @@ def add_future_cba_labels(df: pd.DataFrame, labels: pd.DataFrame) -> pd.DataFram
     return out
 
 
-# 函数：pool_mask
 def pool_mask(df: pd.DataFrame, pool: str) -> pd.Series:
     if pool == "broad_eligible_overseas_pool":
         return eligible_overseas_mask(df)

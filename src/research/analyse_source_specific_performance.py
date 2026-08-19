@@ -8,7 +8,6 @@ from .source_diagnostics_utils import add_source_group
 from .utils import PROCESSED_DIR, REPORTS_DIR, ensure_data_dirs
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     ps = add_source_group(pd.read_csv(PROCESSED_DIR / "labelled_player_season_dataset_gleague.csv"))

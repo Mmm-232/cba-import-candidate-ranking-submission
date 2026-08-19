@@ -9,7 +9,6 @@ except ImportError:
     from utils import PROCESSED_DIR, REPORTS_DIR, ensure_data_dirs
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     df = pd.read_csv(PROCESSED_DIR / "labelled_candidate_dataset_source_aware.csv")
@@ -38,7 +37,6 @@ def run() -> None:
     print("Wrote source contribution reports")
 
 
-# 函数：main
 def main() -> None:
     argparse.ArgumentParser().parse_args()
     run()

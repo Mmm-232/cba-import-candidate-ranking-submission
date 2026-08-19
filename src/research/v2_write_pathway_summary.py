@@ -14,7 +14,6 @@ BASELINE = {
 }
 
 
-# 函数：_fmt
 def _fmt(value: object, digits: int = 4) -> str:
     try:
         if pd.isna(value):
@@ -24,7 +23,6 @@ def _fmt(value: object, digits: int = 4) -> str:
         return str(value)
 
 
-# 函数：run
 def run() -> None:
     ensure_v2_dirs()
     audit = pd.read_csv(V2_REPORTS_DIR / "league_pathway_audit.csv")

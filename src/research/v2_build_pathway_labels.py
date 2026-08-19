@@ -6,7 +6,6 @@ from .v2_pathway_utils import V2_PROCESSED_DIR, add_future_cba_labels, eligible_
 OUTPUT = V2_PROCESSED_DIR / "labelled_player_season_dataset_pathway_labels.csv"
 
 
-# 函数：run
 def run() -> None:
     ensure_v2_dirs()
     df = load_base_dataset()

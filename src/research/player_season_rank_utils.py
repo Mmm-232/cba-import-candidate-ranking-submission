@@ -13,7 +13,6 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 TOP_K = [20, 50, 100, 200, 300]
 
 
-# 函数：metric
 def metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     score = pd.to_numeric(score, errors="coerce").fillna(-999)
     y = pd.to_numeric(y, errors="coerce").fillna(0).astype(int)
@@ -47,19 +46,16 @@ def metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     return out
 
 
-# 函数：split_years
 def split_years(df: pd.DataFrame) -> list[int]:
     years = sorted(df.loc[df["signed_cba_next_season"].eq(1), "season_start_year"].dropna().unique())
     return [int(year) for year in years if df.loc[df["season_start_year"] < year, "signed_cba_next_season"].nunique() == 2]
 
 
-# 函数：high_usage_pool
 def high_usage_pool(df: pd.DataFrame) -> pd.DataFrame:
     median = df.groupby(["league", "season"], dropna=False)["usage_proxy"].transform("median")
     return df[(df["max_usage_proxy"] > median) | (df["has_high_usage_row"].fillna(0).astype(float).gt(0))].copy()
 
 
-# 函数：time_aware_common_pool
 def time_aware_common_pool(train: pd.DataFrame, test: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     allowed = set(train.loc[train["signed_cba_next_season"] == 1, "league"].dropna().astype(str))
     train_out = train[train["league"].astype(str).isin(allowed) | train["leagues_played_that_season"].fillna("").apply(lambda x: any(l in str(x) for l in allowed))].copy()
@@ -67,7 +63,6 @@ def time_aware_common_pool(train: pd.DataFrame, test: pd.DataFrame) -> tuple[pd.
     return train_out, test_out
 
 
-# 函数：features
 def features(df: pd.DataFrame) -> tuple[list[str], list[str]]:
     exclude = {
         "player_name_raw",
@@ -93,7 +88,6 @@ def features(df: pd.DataFrame) -> tuple[list[str], list[str]]:
     return numeric, categorical
 
 
-# 函数：logistic_scores
 def logistic_scores(train: pd.DataFrame, test: pd.DataFrame, sample_weight=None) -> pd.Series | None:
     if train.empty or test.empty or train["signed_cba_next_season"].nunique() < 2:
         return None
@@ -119,16 +113,17 @@ def logistic_scores(train: pd.DataFrame, test: pd.DataFrame, sample_weight=None)
 
 
 
-# 函数：fit_rule_score
 def fit_rule_score(df: pd.DataFrame) -> pd.Series:
-    return ltr._rule_score(df.rename(columns={"cba_import_fit_score": "fit_score_tmp"})) if False else (
-        pd.to_numeric(df.get("max_cba_import_fit_score", df.get("cba_import_fit_score")), errors="coerce").fillna(0)
-        + 0.25 * pd.to_numeric(df.get("max_usage_proxy", df.get("usage_proxy")), errors="coerce").fillna(0)
-        + 0.02 * pd.to_numeric(df.get("max_points_per_36", df.get("points_per_36")), errors="coerce").fillna(0)
-    )
+    fit_score = pd.to_numeric(
+        df.get("max_cba_import_fit_score", df.get("cba_import_fit_score")), errors="coerce"
+    ).fillna(0)
+    usage = pd.to_numeric(df.get("max_usage_proxy", df.get("usage_proxy")), errors="coerce").fillna(0)
+    points_per_36 = pd.to_numeric(
+        df.get("max_points_per_36", df.get("points_per_36")), errors="coerce"
+    ).fillna(0)
+    return fit_score + 0.25 * usage + 0.02 * points_per_36
 
 
-# 函数：evaluate_scores
 def evaluate_scores(test: pd.DataFrame, score: pd.Series, meta: dict) -> tuple[dict, pd.DataFrame]:
     row = dict(meta)
     row.update(metric(test["signed_cba_next_season"], score))

@@ -39,7 +39,6 @@ LEAKAGE_COLUMNS = {
 }
 
 
-# 函数：load_best_dataset
 def load_best_dataset(processed_dir: Path) -> pd.DataFrame:
     verified = processed_dir / "labelled_candidate_dataset_multisource_verified.csv"
     fallback = processed_dir / "labelled_candidate_dataset_multisource.csv"
@@ -48,7 +47,6 @@ def load_best_dataset(processed_dir: Path) -> pd.DataFrame:
     return ensure_model_columns(df)
 
 
-# 函数：ensure_model_columns
 def ensure_model_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     if "season_start_year" not in df.columns:
@@ -111,7 +109,6 @@ def ensure_model_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# 函数：split_years
 def split_years(df: pd.DataFrame) -> list[int]:
     pos_years = sorted(pd.to_numeric(df.loc[df["signed_cba_next_season"] == 1, "season_start_year"], errors="coerce").dropna().unique())
     years = []
@@ -122,7 +119,6 @@ def split_years(df: pd.DataFrame) -> list[int]:
     return years
 
 
-# 函数：zscore
 def zscore(series: pd.Series) -> pd.Series:
     values = pd.to_numeric(series, errors="coerce")
     std = values.std(skipna=True)
@@ -131,7 +127,6 @@ def zscore(series: pd.Series) -> pd.Series:
     return ((values - values.mean(skipna=True)) / std).fillna(0.0)
 
 
-# 函数：metric
 def metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     y = pd.to_numeric(y, errors="coerce").fillna(0).astype(int)
     score = pd.to_numeric(score, errors="coerce").fillna(-999)
@@ -163,7 +158,6 @@ def metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     return out
 
 
-# 函数：select_features
 def select_features(df: pd.DataFrame, extra_exclude: set[str] | None = None) -> tuple[list[str], list[str]]:
     exclude = LEAKAGE_COLUMNS | (extra_exclude or set())
     numeric, categorical = [], []
@@ -177,7 +171,6 @@ def select_features(df: pd.DataFrame, extra_exclude: set[str] | None = None) -> 
     return numeric, categorical
 
 
-# 函数：make_logistic
 def make_logistic(numeric: list[str], categorical: list[str]) -> Pipeline:
     return Pipeline(
         [
@@ -199,24 +192,20 @@ def make_logistic(numeric: list[str], categorical: list[str]) -> Pipeline:
     )
 
 
-# 函数：rule_score
 def rule_score(df: pd.DataFrame, cols: list[str]) -> pd.Series:
     parts = [zscore(df[col]) if col in df.columns else pd.Series(0.0, index=df.index) for col in cols]
     return sum(parts) / max(len(parts), 1)
 
 
-# 函数：high_usage_pool
 def high_usage_pool(df: pd.DataFrame) -> pd.DataFrame:
     med = df.groupby(["league", "season"], dropna=False)["usage_proxy"].transform("median")
     return df[(df["games"] >= 10) & (df["minutes_per_game"] >= 15) & (df["usage_proxy"] > med)].copy()
 
 
-# 函数：time_aware_common_pool
 def time_aware_common_pool(train: pd.DataFrame, test: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     leagues = set(train.loc[train["signed_cba_next_season"] == 1, "league"].dropna().astype(str))
     return train[train["league"].astype(str).isin(leagues)].copy(), test[test["league"].astype(str).isin(leagues)].copy()
 
 
-# 函数：ranker_available
 def ranker_available(name: str) -> bool:
     return importlib.util.find_spec(name) is not None

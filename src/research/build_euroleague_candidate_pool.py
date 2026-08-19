@@ -50,7 +50,6 @@ OUTPUT_COLUMNS = [
 ]
 
 
-# 函数：_label
 def _label(df: pd.DataFrame) -> pd.DataFrame:
     label_path = PROCESSED_DIR / "cba_imports_extended_verified.csv"
     if not label_path.exists():
@@ -64,7 +63,6 @@ def _label(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# 函数：run
 def run(start_year: int = 2020, end_year: int = 2024) -> None:
     ensure_data_dirs()
     try:
@@ -99,7 +97,6 @@ def run(start_year: int = 2020, end_year: int = 2024) -> None:
     print(f"EuroLeague full pool {status}: {len(pool)} rows")
 
 
-# 函数：main
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--start-year", type=int, default=2020)

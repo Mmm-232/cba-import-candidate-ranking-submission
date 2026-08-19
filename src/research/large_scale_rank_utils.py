@@ -32,13 +32,11 @@ COMMON_PATHWAY_TERMS = [
 ]
 
 
-# 函数：stable_id
 def stable_id(*parts: object) -> str:
     text = "|".join(str(p) for p in parts)
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
 
 
-# 函数：load_ps
 def load_ps(path) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["season_start_year"] = pd.to_numeric(df["season_start_year"], errors="coerce")
@@ -47,7 +45,6 @@ def load_ps(path) -> pd.DataFrame:
     return df
 
 
-# 函数：is_common_pathway
 def is_common_pathway(row: pd.Series) -> bool:
     text = f"{row.get('league', '')} {row.get('leagues_played_that_season', '')} {row.get('source_group', '')}".lower()
     if any(term in text for term in COMMON_PATHWAY_TERMS):
@@ -55,7 +52,6 @@ def is_common_pathway(row: pd.Series) -> bool:
     return bool(row.get("has_common_pathway_league", 0))
 
 
-# 函数：high_confidence_pathway_mask
 def high_confidence_pathway_mask(df: pd.DataFrame) -> pd.Series:
     rows = []
     for row in df.itertuples(index=False):
@@ -72,7 +68,6 @@ def high_confidence_pathway_mask(df: pd.DataFrame) -> pd.Series:
     return pd.Series(rows, index=df.index)
 
 
-# 函数：pool_mask
 def pool_mask(df: pd.DataFrame, pool: str) -> pd.Series:
     if pool == "pool_full_multisource":
         return pd.Series(True, index=df.index)
@@ -85,7 +80,6 @@ def pool_mask(df: pd.DataFrame, pool: str) -> pd.Series:
     raise ValueError(pool)
 
 
-# 函数：metric
 def metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     score = pd.to_numeric(score, errors="coerce").fillna(-999)
     ranked = pd.DataFrame({"y": y.astype(int), "score": score}).sort_values("score", ascending=False).reset_index(drop=True)
@@ -115,7 +109,6 @@ def metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     return out
 
 
-# 函数：score_model
 def score_model(train: pd.DataFrame, test: pd.DataFrame, model: str, gleague_boost: float = 0.0) -> pd.Series | None:
     if test.empty:
         return None
@@ -132,7 +125,6 @@ def score_model(train: pd.DataFrame, test: pd.DataFrame, model: str, gleague_boo
     return pd.to_numeric(score, errors="coerce").fillna(-999) + gleague_boost * test["source_group"].eq("gleague_nba_api").astype(float)
 
 
-# 函数：top_true_positives
 def top_true_positives(test: pd.DataFrame, score: pd.Series, meta: dict) -> pd.DataFrame:
     ranked = test.copy()
     ranked["score"] = pd.to_numeric(score, errors="coerce").fillna(-999).to_numpy()

@@ -51,7 +51,6 @@ OUTPUT_COLUMNS = [
 ]
 
 
-# 函数：_label_path
 def _label_path() -> tuple[pd.DataFrame, str]:
     path = PROCESSED_DIR / "cba_imports_extended_verified.csv"
     if not path.exists():
@@ -59,7 +58,6 @@ def _label_path() -> tuple[pd.DataFrame, str]:
     return pd.read_csv(path), path.name
 
 
-# 函数：_label
 def _label(pool: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     labels, label_file = _label_path()
     pairs = set(zip(labels["player_name_key"].astype(str), labels["cba_season"].astype(str)))
@@ -70,7 +68,6 @@ def _label(pool: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     return out, label_file
 
 
-# 函数：_current_positive_pairs
 def _current_positive_pairs() -> set[tuple[str, str]]:
     candidates = [
         PROCESSED_DIR / "labelled_candidate_dataset_multisource_verified.csv",
@@ -86,7 +83,6 @@ def _current_positive_pairs() -> set[tuple[str, str]]:
     return set()
 
 
-# 函数：_year
 def _year(value: object) -> int | None:
     try:
         return season_start_year(str(value))
@@ -94,7 +90,6 @@ def _year(value: object) -> int | None:
         return None
 
 
-# 函数：_write_unavailable_report
 def _write_unavailable_report(raw: pd.DataFrame) -> None:
     rows = [
         {"metric": "status", "value": "unavailable_or_empty"},
@@ -107,7 +102,6 @@ def _write_unavailable_report(raw: pd.DataFrame) -> None:
     pd.DataFrame(rows).to_csv(REPORTS_DIR / "gleague_nba_api_label_summary.csv", index=False)
 
 
-# 函数：_write_reports
 def _write_reports(pool: pd.DataFrame, label_file: str) -> None:
     current_pairs = _current_positive_pairs()
     positives = pool[pool["signed_cba_next_season"].eq(1)].copy()
@@ -142,7 +136,6 @@ def _write_reports(pool: pd.DataFrame, label_file: str) -> None:
     pd.DataFrame(label_rows).to_csv(REPORTS_DIR / "gleague_nba_api_label_summary.csv", index=False)
 
 
-# 函数：_write_sanity_check
 def _write_sanity_check(pool: pd.DataFrame) -> None:
     checks = pool.copy()
     for col in ["minutes_per_game", "points_per_36", "usage_proxy", "usage_rate", "ts_pct", "efg_pct"]:
@@ -186,7 +179,6 @@ def _write_sanity_check(pool: pd.DataFrame) -> None:
     (REPORTS_DIR / "gleague_stat_sanity_check.md").write_text("\n".join(lines), encoding="utf-8")
 
 
-# 函数：run
 def run() -> pd.DataFrame:
     ensure_data_dirs()
     source = GLeagueNbaApiSource()
@@ -209,7 +201,6 @@ def run() -> pd.DataFrame:
     return pool
 
 
-# 函数：main
 def main() -> None:
     run()
 

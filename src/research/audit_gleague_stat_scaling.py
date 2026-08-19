@@ -25,7 +25,6 @@ STAT_COLS = [
 ]
 
 
-# 函数：_ensure_derived
 def _ensure_derived(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     for col in ["games", "minutes", "minutes_per_game", "points", "field_goal_attempts", "free_throw_attempts", "turnovers"]:
@@ -38,7 +37,6 @@ def _ensure_derived(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# 函数：_profile
 def _profile(df: pd.DataFrame, label: str) -> dict[str, object]:
     row = {"dataset": label, "rows": len(df)}
     for col in STAT_COLS:
@@ -54,7 +52,6 @@ def _profile(df: pd.DataFrame, label: str) -> dict[str, object]:
     return row
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     (DATA_DIR / "cache").mkdir(parents=True, exist_ok=True)

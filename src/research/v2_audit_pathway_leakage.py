@@ -22,7 +22,6 @@ TARGET_TERMS = [
 ]
 
 
-# 函数：run
 def run() -> None:
     ensure_v2_dirs()
     df = pd.read_csv(DATA)

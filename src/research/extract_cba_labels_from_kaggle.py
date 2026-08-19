@@ -22,7 +22,6 @@ START_YEAR = 2015
 END_YEAR = 2019
 
 
-# 函数：_find_column
 def _find_column(columns: list[str], candidates: list[str]) -> str | None:
     normalised = {"".join(ch.lower() for ch in col if ch.isalnum()): col for col in columns}
     for candidate in candidates:
@@ -32,7 +31,6 @@ def _find_column(columns: list[str], candidates: list[str]) -> str | None:
     return None
 
 
-# 函数：_is_domestic_chinese
 def _is_domestic_chinese(nationality: object) -> bool:
     value = str(nationality or "").strip().lower()
     if not value or value == "nan":
@@ -40,13 +38,11 @@ def _is_domestic_chinese(nationality: object) -> bool:
     return value in {"china", "chinese", "chn", "china/chinese"}
 
 
-# 函数：_to_cba_season
 def _to_cba_season(season: object) -> str:
     start = season_start_year(str(season))
     return f"{start}-{start + 1}"
 
 
-# 函数：extract_labels
 def extract_labels(output_path: Path, report_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     source = Kaggle49LeaguesSource()
     csv_files = sorted(source.data_dir.glob("*.csv"))
@@ -114,7 +110,6 @@ def extract_labels(output_path: Path, report_path: Path) -> tuple[pd.DataFrame, 
     return labels, report
 
 
-# 函数：_build_report
 def _build_report(labels: pd.DataFrame, excluded_domestic: int, has_nationality: bool) -> pd.DataFrame:
     rows = []
     for season, group in labels.groupby("cba_season", dropna=False):
@@ -143,7 +138,6 @@ def _build_report(labels: pd.DataFrame, excluded_domestic: int, has_nationality:
     return pd.DataFrame(rows)
 
 
-# 函数：main
 def main() -> None:
     parser = argparse.ArgumentParser(description="Extract historical CBA import label candidates from Kaggle Chinese-CBA rows.")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)

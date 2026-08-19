@@ -27,7 +27,6 @@ EXCLUDE = {
 }
 
 
-# 函数：_load
 def _load() -> pd.DataFrame:
     if not INPUT.exists():
         raise FileNotFoundError("Run python -m src.build_league_adjusted_features first.")
@@ -36,7 +35,6 @@ def _load() -> pd.DataFrame:
     return df
 
 
-# 函数：_pool
 def _pool(df: pd.DataFrame, name: str) -> pd.DataFrame:
     if name == "full_current_player_season":
         return df.copy()
@@ -49,7 +47,6 @@ def _pool(df: pd.DataFrame, name: str) -> pd.DataFrame:
     raise ValueError(name)
 
 
-# 函数：_feature_cols
 def _feature_cols(df: pd.DataFrame, variant: str) -> tuple[list[str], list[str]]:
     all_numeric, all_cat = ps.features(df)
     league_adjusted = [c for c in all_numeric if "_league_season_" in c or c in {"league_season_group_size", "league_season_low_sample_flag"}]
@@ -76,7 +73,6 @@ def _feature_cols(df: pd.DataFrame, variant: str) -> tuple[list[str], list[str]]
     return numeric, categorical
 
 
-# 函数：_preprocess
 def _preprocess(train: pd.DataFrame, test: pd.DataFrame, variant: str):
     numeric, categorical = _feature_cols(train, variant)
     features = numeric + categorical
@@ -91,13 +87,11 @@ def _preprocess(train: pd.DataFrame, test: pd.DataFrame, variant: str):
     return train_x, test_x, features
 
 
-# 函数：_group_sizes
 def _group_sizes(train: pd.DataFrame) -> list[int]:
     sorted_train = train.sort_values("season_start_year")
     return [len(group) for _, group in sorted_train.groupby("season_start_year", sort=True)]
 
 
-# 函数：_lgbm_scores
 def _lgbm_scores(train: pd.DataFrame, test: pd.DataFrame, variant: str) -> tuple[pd.Series | None, list[str]]:
     if importlib.util.find_spec("lightgbm") is None:
         return None, []
@@ -119,7 +113,6 @@ def _lgbm_scores(train: pd.DataFrame, test: pd.DataFrame, variant: str) -> tuple
     return pd.Series(model.predict(test_x), index=test.index), features
 
 
-# 函数：_logistic_scores
 def _logistic_scores(train: pd.DataFrame, test: pd.DataFrame, variant: str) -> tuple[pd.Series | None, list[str]]:
     if train.empty or test.empty or train["signed_cba_next_season"].nunique() < 2:
         return None, []
@@ -129,7 +122,6 @@ def _logistic_scores(train: pd.DataFrame, test: pd.DataFrame, variant: str) -> t
     return pd.Series(model.predict_proba(test_x)[:, 1], index=test.index), features
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     df = _load()

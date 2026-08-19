@@ -28,7 +28,6 @@ RAW_FEATURES = [
 MIN_GROUP_SIZE = 10
 
 
-# 函数：_z
 def _z(series: pd.Series) -> pd.Series:
     values = pd.to_numeric(series, errors="coerce")
     std = values.std()
@@ -37,12 +36,10 @@ def _z(series: pd.Series) -> pd.Series:
     return (values - values.mean()) / std
 
 
-# 函数：_pct
 def _pct(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce").rank(method="average", pct=True)
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     path = INPUT if INPUT.exists() else FALLBACK_INPUT

@@ -89,12 +89,10 @@ AUDIT_DATASETS = {
 RAW_KAGGLE_DIR = DATA_DIR / "external" / "kaggle_49leagues"
 
 
-# 函数：_normalise_column_name
 def _normalise_column_name(value: str) -> str:
     return "".join(ch.lower() for ch in str(value).strip() if ch.isalnum())
 
 
-# 函数：_read_csv
 def _read_csv(path: Path, required: bool = False) -> pd.DataFrame:
     if not path.exists():
         if required:
@@ -104,7 +102,6 @@ def _read_csv(path: Path, required: bool = False) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-# 函数：_coverage_for_fields
 def _coverage_for_fields(df: pd.DataFrame, dataset: str, fields: list[str], field_group: str) -> pd.DataFrame:
     rows = []
     total_rows = len(df)
@@ -127,7 +124,6 @@ def _coverage_for_fields(df: pd.DataFrame, dataset: str, fields: list[str], fiel
     return pd.DataFrame(rows)
 
 
-# 函数：_season_span
 def _season_span(series: pd.Series) -> str:
     values = sorted(series.dropna().astype(str).unique())
     if not values:
@@ -135,7 +131,6 @@ def _season_span(series: pd.Series) -> str:
     return f"{values[0]} to {values[-1]}"
 
 
-# 函数：_league_category
 def _league_category(league: object) -> str:
     if is_nba_league(league):
         return "excluded_nba"
@@ -146,7 +141,6 @@ def _league_category(league: object) -> str:
     return "excluded_other"
 
 
-# 函数：_league_coverage
 def _league_coverage(history: pd.DataFrame, labelled: pd.DataFrame) -> pd.DataFrame:
     rows = []
     frames = {
@@ -181,7 +175,6 @@ def _league_coverage(history: pd.DataFrame, labelled: pd.DataFrame) -> pd.DataFr
     return pd.DataFrame(rows).sort_values(["dataset", "rows"], ascending=[True, False])
 
 
-# 函数：_source_level_audit
 def _source_level_audit(history: pd.DataFrame) -> pd.DataFrame:
     if history.empty or "source" not in history.columns:
         return pd.DataFrame()
@@ -212,7 +205,6 @@ def _source_level_audit(history: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("rows", ascending=False)
 
 
-# 函数：_candidate_dataset_audit
 def _candidate_dataset_audit(labelled: pd.DataFrame) -> pd.DataFrame:
     rows = []
     if labelled.empty:
@@ -264,7 +256,6 @@ def _candidate_dataset_audit(labelled: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# 函数：_load_raw_kaggle
 def _load_raw_kaggle() -> pd.DataFrame:
     csv_files = sorted(RAW_KAGGLE_DIR.glob("*.csv"))
     if not csv_files:
@@ -278,7 +269,6 @@ def _load_raw_kaggle() -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
-# 函数：_source_column
 def _source_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
     normalised = {_normalise_column_name(col): col for col in df.columns}
     for candidate in candidates:
@@ -288,7 +278,6 @@ def _source_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
     return None
 
 
-# 函数：_append_anomalies
 def _append_anomalies(
     rows: list[dict[str, object]],
     df: pd.DataFrame,
@@ -317,7 +306,6 @@ def _append_anomalies(
         )
 
 
-# 函数：_data_anomaly_reports
 def _data_anomaly_reports(labelled: pd.DataFrame, raw_kaggle: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     rows: list[dict[str, object]] = []
 
@@ -420,7 +408,6 @@ def _data_anomaly_reports(labelled: pd.DataFrame, raw_kaggle: pd.DataFrame) -> t
     return report, summary
 
 
-# 函数：_markdown_table
 def _markdown_table(df: pd.DataFrame, max_rows: int = 20) -> str:
     if df.empty:
         return "_No data available._"
@@ -428,7 +415,6 @@ def _markdown_table(df: pd.DataFrame, max_rows: int = 20) -> str:
     headers = [str(col) for col in shown.columns]
     rows = [[str(value) for value in row] for row in shown.to_numpy().tolist()]
 
-    # 函数：clean
     def clean(text: str) -> str:
         return text.replace("|", "\\|").replace("\n", " ")
 
@@ -441,7 +427,6 @@ def _markdown_table(df: pd.DataFrame, max_rows: int = 20) -> str:
     )
 
 
-# 函数：_field_status
 def _field_status(coverage: pd.DataFrame, dataset: str, fields: list[str]) -> tuple[list[str], list[str]]:
     subset = coverage[(coverage["dataset"] == dataset) & (coverage["field"].isin(fields))]
     available = subset.loc[subset["non_null_rows"] > 0, "field"].tolist()
@@ -449,7 +434,6 @@ def _field_status(coverage: pd.DataFrame, dataset: str, fields: list[str]) -> tu
     return available, missing
 
 
-# 函数：_build_markdown
 def _build_markdown(
     datasets: dict[str, pd.DataFrame],
     basic_coverage: pd.DataFrame,
@@ -627,7 +611,6 @@ The anomaly audit found **{anomaly_total:,} flagged rows** across the final labe
 """
 
 
-# 函数：run_audit
 def run_audit(processed_dir: Path, reports_dir: Path) -> None:
     datasets = {
         name: _read_csv(processed_dir / filename, required=name in {"labelled_candidate_dataset"})
@@ -695,7 +678,6 @@ def run_audit(processed_dir: Path, reports_dir: Path) -> None:
     LOGGER.info("Wrote data anomaly summary to %s", reports_dir / "data_anomaly_summary.csv")
 
 
-# 函数：main
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit final project data coverage without changing modelling logic.")
     parser.add_argument("--processed-dir", type=Path, default=PROCESSED_DIR)

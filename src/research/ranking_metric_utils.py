@@ -8,7 +8,6 @@ from sklearn.metrics import average_precision_score
 TOP_K = [20, 50, 100, 300]
 
 
-# 函数：ranking_metrics
 def ranking_metrics(y: pd.Series, score: pd.Series) -> dict[str, float]:
     y = y.astype(int).reset_index(drop=True)
     score = pd.to_numeric(score, errors="coerce").fillna(-999).reset_index(drop=True)
@@ -44,7 +43,6 @@ def ranking_metrics(y: pd.Series, score: pd.Series) -> dict[str, float]:
     return out
 
 
-# 函数：ranked_predictions
 def ranked_predictions(df: pd.DataFrame, score: pd.Series, meta: dict[str, object]) -> pd.DataFrame:
     out = df.copy()
     out["score"] = pd.to_numeric(score, errors="coerce").fillna(-999).to_numpy()

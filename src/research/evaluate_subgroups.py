@@ -8,7 +8,6 @@ from .ranking_metric_utils import ranked_predictions, ranking_metrics
 from .utils import PROCESSED_DIR, REPORTS_DIR, ensure_data_dirs
 
 
-# 函数：_load_scores
 def _load_scores() -> pd.DataFrame:
     ltr = REPORTS_DIR / "ltr_topk_predictions.csv"
     if ltr.exists():
@@ -25,7 +24,6 @@ def _load_scores() -> pd.DataFrame:
     return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
 
 
-# 函数：_subgroup_masks
 def _subgroup_masks(df: pd.DataFrame) -> dict[str, pd.Series]:
     masks = {}
     text = (df.get("league", "").astype(str) + " " + df.get("leagues_played_that_season", "").astype(str)).str.lower()
@@ -43,7 +41,6 @@ def _subgroup_masks(df: pd.DataFrame) -> dict[str, pd.Series]:
     return masks
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     pred = _load_scores()

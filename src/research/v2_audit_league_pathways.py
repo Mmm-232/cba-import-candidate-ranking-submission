@@ -5,14 +5,12 @@ import pandas as pd
 from .v2_pathway_utils import V2_REPORTS_DIR, add_future_cba_labels, ensure_v2_dirs, load_base_dataset, load_cba_labels, is_australian_nbl_row
 
 
-# 函数：_top_players
 def _top_players(group: pd.DataFrame) -> str:
     linked = group[group["ever_signed_cba_after_t"].eq(1)]
     names = linked.sort_values(["seasons_until_cba", "player_name_raw"], na_position="last")["player_name_raw"].dropna().astype(str).drop_duplicates().head(15)
     return "; ".join(names)
 
 
-# 函数：run
 def run() -> None:
     ensure_v2_dirs()
     df = add_future_cba_labels(load_base_dataset(), load_cba_labels())

@@ -5,7 +5,6 @@ import pandas as pd
 from . import player_season_rank_utils as ps
 
 
-# 函数：source_group
 def source_group(row: pd.Series) -> str:
     sources = str(row.get("sources_present", row.get("source_id", ""))).lower()
     leagues = str(row.get("leagues_played_that_season", row.get("league", ""))).lower()
@@ -23,14 +22,12 @@ def source_group(row: pd.Series) -> str:
     return "other"
 
 
-# 函数：add_source_group
 def add_source_group(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["source_group"] = out.apply(source_group, axis=1)
     return out
 
 
-# 函数：safe_rank_percentile
 def safe_rank_percentile(score: pd.Series, group: pd.Series | None = None) -> pd.Series:
     score = pd.to_numeric(score, errors="coerce")
     if group is None:
@@ -38,12 +35,10 @@ def safe_rank_percentile(score: pd.Series, group: pd.Series | None = None) -> pd
     return score.groupby(group).rank(method="average", pct=True).fillna(0.0)
 
 
-# 函数：base_rule_score
 def base_rule_score(df: pd.DataFrame) -> pd.Series:
     return ps.fit_rule_score(df)
 
 
-# 函数：rank_frame
 def rank_frame(test: pd.DataFrame, score: pd.Series, method: str) -> pd.DataFrame:
     ranked = test.copy()
     ranked["score"] = pd.to_numeric(score, errors="coerce").fillna(-999).to_numpy()
@@ -52,7 +47,6 @@ def rank_frame(test: pd.DataFrame, score: pd.Series, method: str) -> pd.DataFram
     return ranked
 
 
-# 函数：evaluate_ranked
 def evaluate_ranked(test: pd.DataFrame, score: pd.Series, meta: dict) -> tuple[dict, pd.DataFrame]:
     row, tp = ps.evaluate_scores(test, score, meta)
     return row, tp

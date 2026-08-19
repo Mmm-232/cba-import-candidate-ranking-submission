@@ -58,7 +58,6 @@ LEAGUE_ADJUSTED_CANDIDATES = [
 ]
 
 
-# 函数：_feature_sets
 def _feature_sets(df: pd.DataFrame) -> dict[str, list[str]]:
     raw = [c for c in RAW_FEATURES if c in df.columns]
     pathway = [c for c in PATHWAY_FEATURES if c in df.columns]
@@ -72,7 +71,6 @@ def _feature_sets(df: pd.DataFrame) -> dict[str, list[str]]:
     }
 
 
-# 函数：_metric
 def _metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     y = pd.to_numeric(y, errors="coerce").fillna(0).astype(int)
     score = pd.to_numeric(score, errors="coerce").fillna(-999)
@@ -101,7 +99,6 @@ def _metric(y: pd.Series, score: pd.Series) -> dict[str, float]:
     return out
 
 
-# 函数：_prep_model
 def _prep_model(train: pd.DataFrame, features: list[str]) -> Pipeline:
     numeric = [c for c in features if pd.api.types.is_numeric_dtype(train[c]) or pd.to_numeric(train[c], errors="coerce").notna().any()]
     categorical = [c for c in features if c not in numeric]
@@ -115,7 +112,6 @@ def _prep_model(train: pd.DataFrame, features: list[str]) -> Pipeline:
     return Pipeline([("pre", pre), ("model", LogisticRegression(max_iter=1000, class_weight="balanced", random_state=42))])
 
 
-# 函数：_logistic_score
 def _logistic_score(train: pd.DataFrame, test: pd.DataFrame, label: str, features: list[str]) -> pd.Series | None:
     if train[label].nunique() < 2 or not features:
         return None
@@ -124,7 +120,6 @@ def _logistic_score(train: pd.DataFrame, test: pd.DataFrame, label: str, feature
     return pd.Series(model.predict_proba(test[features])[:, 1], index=test.index)
 
 
-# 函数：_lgbm_rank_score
 def _lgbm_rank_score(train: pd.DataFrame, test: pd.DataFrame, label: str, features: list[str]) -> pd.Series | None:
     if importlib.util.find_spec("lightgbm") is None or train[label].nunique() < 2 or not features:
         return None
@@ -141,7 +136,6 @@ def _lgbm_rank_score(train: pd.DataFrame, test: pd.DataFrame, label: str, featur
     return pd.Series(model.predict(numeric_test), index=test.index)
 
 
-# 函数：_run_pool
 def _run_pool(pool_name: str, df: pd.DataFrame) -> tuple[list[dict], list[pd.DataFrame], list[dict]]:
     results, preds, feature_rows = [], [], []
     years = sorted(pd.to_numeric(df["season_start_year"], errors="coerce").dropna().astype(int).unique())
@@ -181,7 +175,6 @@ def _run_pool(pool_name: str, df: pd.DataFrame) -> tuple[list[dict], list[pd.Dat
     return results, preds, feature_rows
 
 
-# 函数：run
 def run() -> None:
     ensure_v2_dirs()
     all_results, all_preds, all_features = [], [], []

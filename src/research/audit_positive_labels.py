@@ -19,7 +19,6 @@ LOGGER = logging.getLogger(__name__)
 KAGGLE_DIR = DATA_DIR / "external" / "kaggle_49leagues"
 
 
-# 函数：_load_kaggle_chinese_cba
 def _load_kaggle_chinese_cba() -> pd.DataFrame:
     frames = []
     for path in sorted(KAGGLE_DIR.glob("*.csv")):
@@ -40,12 +39,10 @@ def _load_kaggle_chinese_cba() -> pd.DataFrame:
     return cba
 
 
-# 函数：_candidate_key
 def _candidate_key(df: pd.DataFrame) -> pd.Series:
     return df["player_name_key"].astype(str) + "|" + df["next_season"].astype(str)
 
 
-# 函数：audit_positive_labels
 def audit_positive_labels(labelled_path: Path, enriched_path: Path, cba_path: Path) -> None:
     labelled = pd.read_csv(labelled_path)
     enriched = pd.read_csv(enriched_path) if enriched_path.exists() else labelled.copy()
@@ -173,7 +170,6 @@ def audit_positive_labels(labelled_path: Path, enriched_path: Path, cba_path: Pa
     LOGGER.info("Positive audit complete: before=%s recovered=%s after=%s", before, recovered, after)
 
 
-# 函数：main
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit possible missed positive CBA labels.")
     parser.add_argument("--labelled", type=Path, default=PROCESSED_DIR / "labelled_candidate_dataset.csv")

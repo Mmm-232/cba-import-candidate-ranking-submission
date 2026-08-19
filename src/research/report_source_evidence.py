@@ -9,7 +9,6 @@ except ImportError:
     from utils import DATA_DIR, PROCESSED_DIR, REPORTS_DIR, ensure_data_dirs
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     df = pd.read_csv(PROCESSED_DIR / "labelled_candidate_dataset_multisource_verified.csv")
@@ -45,7 +44,6 @@ def run() -> None:
     print("Wrote source evidence summary")
 
 
-# 函数：main
 def main() -> None:
     argparse.ArgumentParser().parse_args()
     run()

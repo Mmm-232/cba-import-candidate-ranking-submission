@@ -10,7 +10,6 @@ except ImportError:
     from utils import PROCESSED_DIR, REPORTS_DIR, ensure_data_dirs
 
 
-# 函数：_source_group
 def _source_group(source_id: object) -> str:
     text = str(source_id or "").lower()
     if "kaggle" in text:
@@ -22,7 +21,6 @@ def _source_group(source_id: object) -> str:
     return "other"
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     df = pd.read_csv(PROCESSED_DIR / "labelled_candidate_dataset_multisource.csv")
@@ -52,7 +50,6 @@ def run() -> None:
     print(f"Wrote source-aware dataset: {len(df)} rows, {int(df['signed_cba_next_season'].sum())} positives")
 
 
-# 函数：main
 def main() -> None:
     argparse.ArgumentParser().parse_args()
     run()

@@ -10,7 +10,6 @@ OUTPUT = PROCESSED_DIR / "labelled_player_season_dataset_gleague_context_enriche
 AGE_WINDOWS = [(22, 36), (23, 35), (24, 34), (25, 33)]
 
 
-# 函数：_season_year
 def _season_year(value: object) -> float:
     try:
         return float(season_start_year(str(value)))
@@ -18,7 +17,6 @@ def _season_year(value: object) -> float:
         return float("nan")
 
 
-# 函数：_load_main
 def _load_main() -> pd.DataFrame:
     if not MAIN_INPUT.exists():
         raise FileNotFoundError(f"Missing main player-season input: {MAIN_INPUT}")
@@ -27,7 +25,6 @@ def _load_main() -> pd.DataFrame:
     return df
 
 
-# 函数：_add_prior_cba_features
 def _add_prior_cba_features(df: pd.DataFrame) -> pd.DataFrame:
     label_path = PROCESSED_DIR / "cba_imports_extended_verified.csv"
     if not label_path.exists():
@@ -61,7 +58,6 @@ def _add_prior_cba_features(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([df.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
 
 
-# 函数：_age_candidates
 def _age_candidates(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["age_available"] = False
@@ -82,7 +78,6 @@ def _age_candidates(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# 函数：_add_trends
 def _add_trends(df: pd.DataFrame) -> pd.DataFrame:
     out = df.sort_values(["player_name_key", "season_start_year"]).copy()
     base_cols = [
@@ -110,7 +105,6 @@ def _add_trends(df: pd.DataFrame) -> pd.DataFrame:
     return out.sort_index()
 
 
-# 函数：_write_prior_report
 def _write_prior_report(df: pd.DataFrame) -> None:
     prior = df["has_prior_cba_experience_before_t"].eq(1)
     rows = [
@@ -148,7 +142,6 @@ def _write_prior_report(df: pd.DataFrame) -> None:
     ].to_csv(REPORTS_DIR / "prior_cba_repeat_import_examples.csv", index=False)
 
 
-# 函数：_write_age_reports
 def _write_age_reports(df: pd.DataFrame) -> None:
     age_available = df["age_available"].fillna(False).astype(bool)
     source_summary = df.groupby("source_id", dropna=False).agg(
@@ -186,7 +179,6 @@ def _write_age_reports(df: pd.DataFrame) -> None:
     pd.DataFrame(rows).to_csv(REPORTS_DIR / "age_gate_sensitivity.csv", index=False)
 
 
-# 函数：_write_trend_report
 def _write_trend_report(df: pd.DataFrame) -> None:
     trend_cols = [c for c in df.columns if c.endswith("_trend")]
     rows = [{"metric": "rows", "value": len(df)}, {"metric": "rows_with_previous_season_record", "value": int(df["has_previous_season_record"].sum())}]
@@ -196,7 +188,6 @@ def _write_trend_report(df: pd.DataFrame) -> None:
     pd.DataFrame(rows).to_csv(REPORTS_DIR / "trend_feature_summary.csv", index=False)
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     df = _load_main()

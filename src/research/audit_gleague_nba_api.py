@@ -45,7 +45,6 @@ REQUIRED_FIELDS = [
 ]
 
 
-# 函数：_cache_paths
 def _cache_paths(season: str, measure_type: str) -> tuple[Path, Path]:
     cache_dir = CACHE_DIR / "gleague_nba_api"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +52,6 @@ def _cache_paths(season: str, measure_type: str) -> tuple[Path, Path]:
     return cache_dir / f"{slug}.csv", cache_dir / f"{slug}.json"
 
 
-# 函数：_fetch
 def _fetch(season: str, measure_type: str, delay_seconds: float = 1.5, retries: int = 1) -> pd.DataFrame:
     csv_path, json_path = _cache_paths(season, measure_type)
     if csv_path.exists():
@@ -85,7 +83,6 @@ def _fetch(season: str, measure_type: str, delay_seconds: float = 1.5, retries: 
     raise RuntimeError(str(last_error))
 
 
-# 函数：_audit_one
 def _audit_one(season: str, measure_type: str) -> dict[str, object]:
     row: dict[str, object] = {
         "season": season,
@@ -115,7 +112,6 @@ def _audit_one(season: str, measure_type: str) -> dict[str, object]:
     return row
 
 
-# 函数：_write_markdown
 def _write_markdown(audit: pd.DataFrame) -> None:
     ok = audit[audit["success"].eq(True) & audit["row_count"].gt(0)]
     base = audit[audit["measure_type"].eq("Base")]
@@ -149,7 +145,6 @@ def _write_markdown(audit: pd.DataFrame) -> None:
     (REPORTS_DIR / "gleague_nba_api_feasibility.md").write_text("\n".join(lines), encoding="utf-8")
 
 
-# 函数：run
 def run() -> pd.DataFrame:
     ensure_data_dirs()
     rows = []
@@ -163,7 +158,6 @@ def run() -> pd.DataFrame:
     return audit
 
 
-# 函数：main
 def main() -> None:
     run()
 

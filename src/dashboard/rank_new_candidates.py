@@ -76,19 +76,20 @@ def rank_candidates(input_path: str | Path = DEFAULT_INPUT, output_path: str | P
     df["score_component_context"] = 0.5 * _prior_cba_flag(df)
     df["score_component_completeness"] = pd.to_numeric(df.get("data_completeness_score"), errors="coerce").fillna(0.0)
 
-    # Reuse the final player-season rule score shape where possible, then add transparent display-only components.
+    # Apply the dissertation's fixed three-term rule; other components remain available for review only.
+    if "cba_import_fit_score" in df.columns:
+        fit_signal = pd.to_numeric(df["cba_import_fit_score"], errors="coerce").fillna(0.0)
+    else:
+        fit_signal = df["score_component_pathway"]
+
     base_rule = ps.fit_rule_score(
         df.assign(
-            cba_import_fit_score=df["score_component_pathway"] + 0.25 * df["score_component_performance"],
+            cba_import_fit_score=fit_signal,
             max_usage_proxy=df.get("usage_proxy"),
             max_points_per_36=df.get("points_per_36"),
         )
     )
-    df["recommendation_score"] = (
-        pd.to_numeric(base_rule, errors="coerce").fillna(0)
-        + 0.15 * df["score_component_context"]
-        + 0.10 * df["score_component_completeness"]
-    )
+    df["recommendation_score"] = pd.to_numeric(base_rule, errors="coerce").fillna(0)
     df["new_rank"] = df["recommendation_score"].rank(method="first", ascending=False).astype(int)
     df["reason_summary"] = df.apply(_reason, axis=1)
     df["video_search_query"] = [

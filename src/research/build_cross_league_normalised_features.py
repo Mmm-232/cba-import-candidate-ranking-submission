@@ -6,7 +6,6 @@ from .source_diagnostics_utils import add_source_group
 from .utils import PROCESSED_DIR, REPORTS_DIR, ensure_data_dirs
 
 
-# 函数：_z
 def _z(series: pd.Series) -> pd.Series:
     s = pd.to_numeric(series, errors="coerce")
     std = s.std()
@@ -15,18 +14,15 @@ def _z(series: pd.Series) -> pd.Series:
     return (s - s.mean()) / std
 
 
-# 函数：_pct
 def _pct(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce").rank(pct=True).fillna(0.5)
 
 
-# 函数：_within
 def _within(df: pd.DataFrame, group_cols: list[str], col: str, suffix: str) -> None:
     df[f"{suffix}_{col}_z"] = df.groupby(group_cols, dropna=False)[col].transform(_z)
     df[f"{suffix}_{col}_pct"] = df.groupby(group_cols, dropna=False)[col].transform(_pct)
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     input_path = PROCESSED_DIR / "labelled_player_season_dataset_domestic.csv"

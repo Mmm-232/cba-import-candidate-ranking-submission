@@ -10,7 +10,6 @@ OUTPUT = V2_PROCESSED_DIR / "labelled_player_season_dataset_pathway_features.csv
 SUMMARY = V2_REPORTS_DIR / "pathway_feature_summary.csv"
 
 
-# 函数：_contains_any
 def _contains_any(text: pd.Series, terms: list[str]) -> pd.Series:
     mask = pd.Series(False, index=text.index)
     for term in terms:
@@ -18,7 +17,6 @@ def _contains_any(text: pd.Series, terms: list[str]) -> pd.Series:
     return mask.astype(int)
 
 
-# 函数：run
 def run() -> None:
     ensure_v2_dirs()
     df = pd.read_csv(INPUT)

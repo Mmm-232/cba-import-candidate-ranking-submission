@@ -16,7 +16,6 @@ POOLS = [
 ]
 
 
-# 函数：_summary
 def _summary(df: pd.DataFrame, row_df: pd.DataFrame, pool_name: str) -> dict[str, object]:
     row_count = len(row_df[row_df["candidate_id"].isin(set(df["candidate_id"]))]) if "candidate_id" in row_df else pd.NA
     return {
@@ -34,7 +33,6 @@ def _summary(df: pd.DataFrame, row_df: pd.DataFrame, pool_name: str) -> dict[str
     }
 
 
-# 函数：run
 def run() -> None:
     ensure_data_dirs()
     ps_path = PROCESSED_DIR / "labelled_player_season_dataset_domestic.csv"

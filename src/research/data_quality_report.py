@@ -56,14 +56,12 @@ PLAY_TYPE_FIELDS = [
 ]
 
 
-# 函数：availability
 def availability(series: pd.Series) -> float:
     if len(series) == 0:
         return 0.0
     return round(float(series.notna().mean()), 4)
 
 
-# 函数：build_source_coverage_summary
 def build_source_coverage_summary(
     cba_labels: pd.DataFrame,
     history: pd.DataFrame,
@@ -143,7 +141,6 @@ def build_source_coverage_summary(
     return pd.DataFrame(source_totals + rows)
 
 
-# 函数：build_field_completeness_summary
 def build_field_completeness_summary(history: pd.DataFrame) -> pd.DataFrame:
     fields = KEY_FIELDS + PLAY_TYPE_FIELDS
     rows: list[dict[str, object]] = []
@@ -189,7 +186,6 @@ def build_field_completeness_summary(history: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# 函数：build_league_filter_summary
 def build_league_filter_summary(cba_labels: pd.DataFrame, history: pd.DataFrame) -> pd.DataFrame:
     total_players = cba_labels["player_name_key"].nunique()
     if history.empty:
@@ -236,7 +232,6 @@ def build_league_filter_summary(cba_labels: pd.DataFrame, history: pd.DataFrame)
     )
 
 
-# 函数：write_reports
 def write_reports(
     cba_clean_path: Path,
     history_path: Path,
@@ -269,7 +264,6 @@ def write_reports(
     return source_coverage, field_completeness, league_filter
 
 
-# 函数：main
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build source coverage and field completeness reports.")
     parser.add_argument("--cba-clean", type=Path, default=PROCESSED_DIR / "cba_imports_clean.csv")

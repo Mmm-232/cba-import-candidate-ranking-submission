@@ -17,7 +17,6 @@ POOLS = {
 }
 
 
-# 函数：_expanded_leagues
 def _expanded_leagues() -> set[str]:
     if not AUDIT.exists():
         return set()
@@ -30,7 +29,6 @@ def _expanded_leagues() -> set[str]:
     return set(keep["league"].dropna().astype(str))
 
 
-# 函数：_pool_summary
 def _pool_summary(name: str, pool: pd.DataFrame) -> dict[str, object]:
     return {
         "pool": name,
@@ -46,7 +44,6 @@ def _pool_summary(name: str, pool: pd.DataFrame) -> dict[str, object]:
     }
 
 
-# 函数：run
 def run() -> None:
     ensure_v2_dirs()
     df = pd.read_csv(INPUT)

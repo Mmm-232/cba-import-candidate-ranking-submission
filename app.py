@@ -239,8 +239,6 @@ def _numeric_value(row: pd.Series, field: str) -> float | None:
     value = pd.to_numeric(pd.Series([row.get(field)]), errors="coerce").iloc[0]
     return None if pd.isna(value) else float(value)
 
-def _has_numeric_value(row: pd.Series, field: str) -> bool:
-    return _numeric_value(row, field) is not None
 
 def _format_reason_number(value: float | None, digits: int = 1) -> str:
     if value is None:
@@ -293,7 +291,7 @@ def _english_availability_reason(row: pd.Series) -> str:
         parts.append(f"Games: {_format_reason_number(games, 0)}")
     return "; ".join(parts) if parts else "Availability fields are limited or missing"
 
-def _english_risk_summary(row: pd.Series, value: object) -> str:
+def _english_risk_summary(value: object) -> str:
     text = translate_phrase_text(format_missing_safe(value), "en")
     if text in {"-", "", "nan", "None"}:
         return "No major data-quality risk detected"
@@ -304,7 +302,7 @@ def _english_risk_summary(row: pd.Series, value: object) -> str:
 def _english_final_reason_summary(row: pd.Series) -> str:
     role = display_role_profile_value(row.get("best_role_profile", ""), "en")
     role_reason = _english_role_fit_reason(row)
-    risk = _english_risk_summary(row, row.get("risk_summary", ""))
+    risk = _english_risk_summary(row.get("risk_summary", ""))
     return f"{role}; {role_reason}; risk note: {risk[:1].lower() + risk[1:] if risk else risk}"
 
 def format_role_reason_value(field_name: str, value: object, row: pd.Series, lang: str) -> str:
@@ -323,7 +321,7 @@ def format_role_reason_value(field_name: str, value: object, row: pd.Series, lan
     if field_name == "availability_reason":
         return _english_availability_reason(row)
     if field_name == "risk_summary":
-        return _english_risk_summary(row, value)
+        return _english_risk_summary(value)
     if field_name == "final_reason_summary":
         return _english_final_reason_summary(row)
     return translate_phrase_text(format_missing_safe(value), lang)
